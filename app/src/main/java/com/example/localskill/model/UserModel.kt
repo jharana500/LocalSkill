@@ -1,21 +1,28 @@
 package com.example.localskill.model
 
-import android.R.attr.name
+data class UserModel(
+    val id: String = "",
+    val fullName: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val role: UserRole? = null,
+    val location: String = "",
+    val area: String = "",
+    val city: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationUpdatedAt: Long = 0L,
+    val bio: String = "",
+    val experience: String = "",
+    val availability: String = "",
+    val profileImageUrl: String = "",
+    val averageRating: Double = 0.0,
+    val totalReviews: Int = 0,
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L
+)
 
-data class UserModel (
-    val id : String = "",
-    val fName: String = "",
-    val email : String = "",
-    val password: String= "",
-    val address : String="",
-    val contact : String="",
-){
-    fun toMap() : Map<String, Any?>{
-        return mapOf(
-            "name" to name,
-            "email" to email,
-            "address" to address,
-            "contact" to contact
-        )
-    }
+enum class UserRole {
+    WORKER,
+    EMPLOYER
 }
