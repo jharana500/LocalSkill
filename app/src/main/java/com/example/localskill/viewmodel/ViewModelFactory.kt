@@ -135,6 +135,9 @@ class LocalSkillViewModelFactory(
         modelClass.isAssignableFrom(AdminSettingsViewModel::class.java) ->
             AdminSettingsViewModel(appContainer.appPreferencesRepo) as T
 
+        modelClass.isAssignableFrom(NotificationViewModel::class.java) ->
+            NotificationViewModel(appContainer.authRepo, appContainer.notificationRepo) as T
+
         else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

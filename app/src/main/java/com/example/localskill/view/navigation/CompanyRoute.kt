@@ -6,6 +6,7 @@ sealed class CompanyRoute(val route: String) {
     data object Applicants : CompanyRoute("company/applicants")
     data object Profile : CompanyRoute("company/profile")
     data object Settings : CompanyRoute("company/settings")
+    data object Notifications : CompanyRoute("company/notifications")
 
     data object Verification : CompanyRoute("company/verification")
     data object EditProfile : CompanyRoute("company/profile/edit")

@@ -27,6 +27,7 @@ import com.example.localskill.view.admin.scaffold.AdminScaffold
 import com.example.localskill.view.admin.scaffold.navigateToAdminTab
 import com.example.localskill.view.admin.settings.AdminSettingsScreen
 import com.example.localskill.view.admin.users.AdminUsersScreen
+import com.example.localskill.view.notifications.NotificationScreen
 import com.example.localskill.viewmodel.AdminCategoryViewModel
 import com.example.localskill.viewmodel.AdminCompanyViewModel
 import com.example.localskill.viewmodel.AdminDashboardViewModel
@@ -35,6 +36,7 @@ import com.example.localskill.viewmodel.AdminReportViewModel
 import com.example.localskill.viewmodel.AdminSettingsViewModel
 import com.example.localskill.viewmodel.AdminUserViewModel
 import com.example.localskill.viewmodel.LocalSkillViewModelFactory
+import com.example.localskill.viewmodel.NotificationViewModel
 
 fun NavGraphBuilder.adminNavGraph(
     navController: NavHostController,
@@ -139,7 +141,18 @@ fun NavGraphBuilder.adminNavGraph(
             AdminSettingsScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
+                onNotificationsClick = { navController.navigate(AdminRoute.Notifications.route) },
                 onLogout = onLogout
+            )
+        }
+
+        composable(AdminRoute.Notifications.route) {
+            val viewModel: NotificationViewModel = viewModel(factory = viewModelFactory)
+            NotificationScreen(
+                viewModel = viewModel,
+                role = UserRole.ADMIN,
+                onBack = { navController.popBackStack() },
+                onOpenRoute = { route -> navController.navigate(route) { launchSingleTop = true } }
             )
         }
 

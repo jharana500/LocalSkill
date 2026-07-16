@@ -34,6 +34,7 @@ import com.example.localskill.view.company.scaffold.CompanyScaffold
 import com.example.localskill.view.company.scaffold.navigateToCompanyTab
 import com.example.localskill.view.company.settings.CompanySettingsScreen
 import com.example.localskill.view.company.verification.CompanyVerificationScreen
+import com.example.localskill.view.notifications.NotificationScreen
 import com.example.localskill.viewmodel.ApplicantViewModel
 import com.example.localskill.viewmodel.CompanyDashboardViewModel
 import com.example.localskill.viewmodel.CompanyJobViewModel
@@ -41,6 +42,7 @@ import com.example.localskill.viewmodel.CompanyProfileViewModel
 import com.example.localskill.viewmodel.CompanySettingsViewModel
 import com.example.localskill.viewmodel.CompanyVerificationViewModel
 import com.example.localskill.viewmodel.LocalSkillViewModelFactory
+import com.example.localskill.viewmodel.NotificationViewModel
 
 fun NavGraphBuilder.companyNavGraph(
     navController: NavHostController,
@@ -139,7 +141,18 @@ fun NavGraphBuilder.companyNavGraph(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
                 onVerificationClick = { navController.navigate(CompanyRoute.Verification.route) },
+                onNotificationsClick = { navController.navigate(CompanyRoute.Notifications.route) },
                 onLogout = onLogout
+            )
+        }
+
+        composable(CompanyRoute.Notifications.route) {
+            val viewModel: NotificationViewModel = viewModel(factory = viewModelFactory)
+            NotificationScreen(
+                viewModel = viewModel,
+                role = UserRole.COMPANY,
+                onBack = { navController.popBackStack() },
+                onOpenRoute = { route -> navController.navigate(route) { launchSingleTop = true } }
             )
         }
 
@@ -197,7 +210,11 @@ fun NavGraphBuilder.companyNavGraph(
             val jobId = backStackEntry.arguments?.getString(CompanyRoute.JOB_ID_ARG).orEmpty()
             val viewModel: ApplicantViewModel = viewModel(factory = viewModelFactory)
             LaunchedEffect(jobId) { viewModel.loadApplicants(jobId) }
-            Scaffold(topBar = { LocalSkillTopAppBar(title = "Job applicants", onBack = { navController.popBackStack() }) }) { padding ->
+            Scaffold(topBar = {
+                LocalSkillTopAppBar(
+                    title = "Job applicants",
+                    onBack = { navController.popBackStack() })
+            }) { padding ->
                 ApplicantsScreen(
                     viewModel = viewModel,
                     onApplicantClick = { id -> navController.navigate(CompanyRoute.ApplicantDetails.createRoute(id)) },

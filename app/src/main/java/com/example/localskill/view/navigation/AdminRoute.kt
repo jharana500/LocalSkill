@@ -11,6 +11,7 @@ sealed class AdminRoute(val route: String) {
     data object Categories : AdminRoute("admin/categories")
     data object Activity : AdminRoute("admin/activity")
     data object Settings : AdminRoute("admin/settings")
+    data object Notifications : AdminRoute("admin/notifications")
 
     data object CompanyDetails : AdminRoute("admin/companies/{companyId}") {
         fun createRoute(companyId: String) = "admin/companies/$companyId"

@@ -35,6 +35,7 @@ fun JobSeekerSettingsScreen(
     viewModel: JobSeekerSettingsViewModel,
     onBack: () -> Unit,
     onAccountInfoClick: () -> Unit,
+    onNotificationsClick: () -> Unit,
     onLogout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -97,6 +98,14 @@ fun JobSeekerSettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(onClick = onAccountInfoClick)
+                        .padding(vertical = Spacing.xs)
+                )
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onNotificationsClick)
                         .padding(vertical = Spacing.xs)
                 )
             }

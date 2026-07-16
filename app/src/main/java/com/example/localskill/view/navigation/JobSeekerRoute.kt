@@ -45,6 +45,7 @@ sealed class JobSeekerRoute(val route: String) {
     data object Skills : JobSeekerRoute("job_seeker/profile/skills")
     data object Resume : JobSeekerRoute("job_seeker/profile/resume")
     data object Settings : JobSeekerRoute("job_seeker/settings")
+    data object Notifications : JobSeekerRoute("job_seeker/notifications")
 
     companion object {
         const val JOB_ID_ARG = "jobId"
