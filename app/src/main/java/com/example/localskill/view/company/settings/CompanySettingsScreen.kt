@@ -33,6 +33,7 @@ fun CompanySettingsScreen(
     viewModel: CompanySettingsViewModel,
     onBack: () -> Unit,
     onVerificationClick: () -> Unit,
+    onNotificationsClick: () -> Unit,
     onLogout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,6 +81,14 @@ fun CompanySettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(onClick = onVerificationClick)
+                        .padding(vertical = Spacing.xs)
+                )
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onNotificationsClick)
                         .padding(vertical = Spacing.xs)
                 )
             }

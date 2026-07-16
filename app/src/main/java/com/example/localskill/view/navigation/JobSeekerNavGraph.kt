@@ -32,12 +32,14 @@ import com.example.localskill.view.jobseeker.saved.SavedJobsScreen
 import com.example.localskill.view.jobseeker.scaffold.JobSeekerScaffold
 import com.example.localskill.view.jobseeker.scaffold.navigateToJobSeekerTab
 import com.example.localskill.view.jobseeker.settings.JobSeekerSettingsScreen
+import com.example.localskill.view.notifications.NotificationScreen
 import com.example.localskill.viewmodel.ApplicationViewModel
 import com.example.localskill.viewmodel.JobSeekerHomeViewModel
 import com.example.localskill.viewmodel.JobSeekerProfileViewModel
 import com.example.localskill.viewmodel.JobSeekerSettingsViewModel
 import com.example.localskill.viewmodel.JobViewModel
 import com.example.localskill.viewmodel.LocalSkillViewModelFactory
+import com.example.localskill.viewmodel.NotificationViewModel
 import com.example.localskill.viewmodel.SavedJobViewModel
 import java.net.URLDecoder
 
@@ -268,7 +270,18 @@ fun NavGraphBuilder.jobSeekerNavGraph(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
                 onAccountInfoClick = { navController.navigate(JobSeekerRoute.EditProfile.route) },
+                onNotificationsClick = { navController.navigate(JobSeekerRoute.Notifications.route) },
                 onLogout = onLogout
+            )
+        }
+
+        composable(JobSeekerRoute.Notifications.route) {
+            val viewModel: NotificationViewModel = viewModel(factory = viewModelFactory)
+            NotificationScreen(
+                viewModel = viewModel,
+                role = UserRole.JOB_SEEKER,
+                onBack = { navController.popBackStack() },
+                onOpenRoute = { route -> navController.navigate(route) { launchSingleTop = true } }
             )
         }
     }

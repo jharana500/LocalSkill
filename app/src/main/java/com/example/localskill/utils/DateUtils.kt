@@ -1,6 +1,10 @@
 package com.example.localskill.utils
 
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -33,6 +37,18 @@ object DateUtils {
             days < 30 -> "${days / 7} week${if (days / 7 == 1L) "" else "s"} ago"
             else -> formatDate(timestampMillis)
         }
+    }
+
+    fun formatInterviewDateTime(timestampMillis: Long, zoneId: ZoneId = ZoneId.systemDefault()): String {
+        if (timestampMillis <= 0L) return ""
+        val dateTime = Instant.ofEpochMilli(timestampMillis).atZone(zoneId)
+        val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(Locale.getDefault())
+            .format(dateTime)
+        val time = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+            .withLocale(Locale.getDefault())
+            .format(dateTime)
+        return "$date • $time • ${zoneId.id}"
     }
 
     fun formatDeadline(deadlineMillis: Long): String {

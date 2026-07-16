@@ -4,6 +4,10 @@ import com.example.localskill.model.CompanyDocumentModel
 import com.example.localskill.model.CompanyDocumentType
 import com.example.localskill.model.CompanyModel
 import com.example.localskill.model.CompanyVerificationStatus
+import com.example.localskill.model.NotificationEntityType
+import com.example.localskill.model.NotificationType
+import com.example.localskill.model.UserModel
+import com.example.localskill.model.UserRole
 import com.example.localskill.utils.Constants
 import com.example.localskill.utils.FirebaseErrorMapper
 import com.example.localskill.utils.ResultState
@@ -12,11 +16,13 @@ import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
 class CompanyRepoImpl(
-    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
+    private val notificationRepo: NotificationRepo? = null
 ) : CompanyRepo {
 
     private val companiesRef: DatabaseReference = database.getReference(Constants.COMPANIES_NODE)
     private val companyDocumentsRef: DatabaseReference = database.getReference(Constants.COMPANY_DOCUMENTS_NODE)
+    private val usersRef: DatabaseReference = database.getReference(Constants.USERS_NODE)
 
     override suspend fun getCompany(companyId: String): ResultState<CompanyModel> = try {
         val snapshot = companiesRef.child(companyId).get().await()
@@ -86,17 +92,53 @@ class CompanyRepoImpl(
         }
 
         return try {
+            val now = System.currentTimeMillis()
+            val resubmitted = company.verificationStatus == CompanyVerificationStatus.REJECTED.name
             companiesRef.child(companyId).updateChildren(
                 mapOf(
                     "verificationStatus" to CompanyVerificationStatus.PENDING.name,
-                    "verificationSubmittedAt" to System.currentTimeMillis(),
+                    "verificationSubmittedAt" to now,
                     "rejectionReason" to "",
-                    "updatedAt" to System.currentTimeMillis()
+                    "updatedAt" to now
                 )
             ).await()
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = company.ownerUserId,
+                senderId = company.ownerUserId,
+                type = NotificationType.VERIFICATION_SUBMITTED_CONFIRMATION,
+                relatedEntityType = NotificationEntityType.COMPANY,
+                relatedEntityId = companyId,
+                eventKey = "company:$companyId:verification_submitted:$now:owner"
+            )
+            notifyAdmins(
+                senderId = company.ownerUserId,
+                type = if (resubmitted) NotificationType.COMPANY_VERIFICATION_RESUBMITTED else NotificationType.NEW_VERIFICATION_REQUEST,
+                companyId = companyId,
+                eventKeySuffix = if (resubmitted) "verification_resubmitted:$now" else "verification_submitted:$now"
+            )
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
+        }
+    }
+
+    private suspend fun notifyAdmins(
+        senderId: String,
+        type: NotificationType,
+        companyId: String,
+        eventKeySuffix: String
+    ) {
+        val admins = usersRef.get().await().children.mapNotNull { it.getValue(UserModel::class.java) }
+            .filter { it.role == UserRole.ADMIN.name }
+        admins.forEach { admin ->
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = admin.id,
+                senderId = senderId,
+                type = type,
+                relatedEntityType = NotificationEntityType.COMPANY,
+                relatedEntityId = companyId,
+                eventKey = "company:$companyId:$eventKeySuffix:admin:${admin.id}"
+            )
         }
     }
 }

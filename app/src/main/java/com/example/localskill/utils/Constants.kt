@@ -15,6 +15,8 @@ object Constants {
     const val COMPANY_APPLICATIONS_NODE = "companyApplications"
     const val REPORTS_NODE = "reports"
     const val ADMIN_ACTIVITIES_NODE = "adminActivities"
+    const val NOTIFICATIONS_NODE = "notifications"
+    const val USER_DEVICES_NODE = "userDevices"
 
     const val RESUMES_STORAGE_PATH = "resumes"
     const val PROFILE_IMAGES_STORAGE_PATH = "profileImages"

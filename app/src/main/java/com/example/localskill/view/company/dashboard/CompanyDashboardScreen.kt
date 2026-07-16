@@ -42,6 +42,7 @@ fun CompanyDashboardScreen(
     onPostJobClick: () -> Unit,
     onReviewApplicantsClick: () -> Unit,
     onVerificationClick: () -> Unit,
+    onJobClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -85,8 +86,10 @@ fun CompanyDashboardScreen(
                             text = when (uiState.company.verificationStatus) {
                                 CompanyVerificationStatus.REJECTED.name ->
                                     "Your verification was rejected. Update your details and resubmit to unlock job publishing."
+
                                 CompanyVerificationStatus.PENDING.name ->
                                     "Your verification is under review. You can prepare job posts as drafts in the meantime."
+
                                 else -> "Complete your company profile and submit verification documents to publish jobs."
                             },
                             style = MaterialTheme.typography.bodyMedium,
@@ -132,7 +135,12 @@ fun CompanyDashboardScreen(
                     )
                 }
                 items(uiState.recentJobs, key = { it.id }) { job ->
-                    JobCard(job = job, isSaved = false, onSaveToggle = {}, onClick = {})
+                    JobCard(
+                        job = job,
+                        isSaved = false,
+                        onSaveToggle = {},
+                        onClick = { onJobClick(job.id) }
+                    )
                 }
             }
         }
@@ -160,8 +168,16 @@ private fun DashboardStatsGrid(stats: CompanyDashboardStatsModel, modifier: Modi
     ) {
         items(entries) { (label, value) ->
             LocalSkillCard {
-                Text(text = value.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = value.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

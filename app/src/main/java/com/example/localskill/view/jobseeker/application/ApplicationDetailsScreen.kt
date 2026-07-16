@@ -130,7 +130,7 @@ private fun ApplicationDetailsContent(
             }
             if (application.interviewDate != null) {
                 Text(
-                    text = "Interview: ${DateUtils.formatDate(application.interviewDate)}",
+                    text = "Interview: ${DateUtils.formatInterviewDateTime(application.interviewDate)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = Spacing.sm)

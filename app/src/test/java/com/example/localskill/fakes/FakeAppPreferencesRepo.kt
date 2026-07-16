@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeAppPreferencesRepo(
     initialOnboardingCompleted: Boolean = true,
-    initialAppTheme: AppTheme = AppTheme.SYSTEM
+    initialAppTheme: AppTheme = AppTheme.SYSTEM,
+    private val deviceId: String = "test-device-id"
 ) : AppPreferencesRepo {
 
     private val onboardingCompletedFlow = MutableStateFlow(initialOnboardingCompleted)
@@ -23,4 +24,6 @@ class FakeAppPreferencesRepo(
     override suspend fun setAppTheme(theme: AppTheme) {
         appThemeFlow.value = theme
     }
+
+    override suspend fun getOrCreateDeviceId(): String = deviceId
 }

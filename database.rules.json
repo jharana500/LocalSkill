@@ -114,14 +114,18 @@
     "jobApplications": {
       "$jobId": {
         ".read": "auth != null && (root.child('companies').child(root.child('jobs').child($jobId).child('companyId').val()).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
-        ".write": "auth != null"
+        "$applicationId": {
+          ".write": "auth != null && ((!data.exists() && root.child('applications').child($applicationId).child('applicantId').val() === auth.uid && root.child('applications').child($applicationId).child('jobId').val() === $jobId) || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')"
+        }
       }
     },
 
     "companyApplications": {
       "$companyId": {
         ".read": "auth != null && (root.child('companies').child($companyId).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
-        ".write": "auth != null"
+        "$applicationId": {
+          ".write": "auth != null && ((!data.exists() && root.child('applications').child($applicationId).child('applicantId').val() === auth.uid && root.child('applications').child($applicationId).child('companyId').val() === $companyId) || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')"
+        }
       }
     },
 
@@ -139,6 +143,27 @@
 
         "reporterId": {
           ".validate": "!data.exists() || newData.val() === data.val()"
+        }
+      }
+    },
+
+    "notifications": {
+      "$recipientId": {
+        ".read": "auth != null && $recipientId === auth.uid",
+        ".indexOn": ["isRead", "createdAt"],
+        "$notificationId": {
+          ".write": "auth != null && ((data.exists() && $recipientId === auth.uid && newData.child('id').val() === data.child('id').val() && newData.child('recipientId').val() === data.child('recipientId').val() && newData.child('senderId').val() === data.child('senderId').val() && newData.child('type').val() === data.child('type').val() && newData.child('relatedEntityType').val() === data.child('relatedEntityType').val() && newData.child('relatedEntityId').val() === data.child('relatedEntityId').val() && newData.child('secondaryEntityId').val() === data.child('secondaryEntityId').val() && newData.child('createdAt').val() === data.child('createdAt').val()) || (!data.exists() && newData.child('id').val() === $notificationId && newData.child('recipientId').val() === $recipientId && newData.child('senderId').val() === auth.uid && ((newData.child('type').val() === 'APPLICATION_SUBMITTED' && $recipientId === auth.uid) || (newData.child('type').val() === 'NEW_APPLICATION' && root.child('applications').child(newData.child('relatedEntityId').val()).child('applicantId').val() === auth.uid && root.child('companies').child(root.child('applications').child(newData.child('relatedEntityId').val()).child('companyId').val()).child('ownerUserId').val() === $recipientId) || (newData.child('relatedEntityType').val() === 'APPLICATION' && root.child('applications').child(newData.child('relatedEntityId').val()).child('applicantId').val() === $recipientId && root.child('companies').child(root.child('applications').child(newData.child('relatedEntityId').val()).child('companyId').val()).child('ownerUserId').val() === auth.uid) || (newData.child('relatedEntityType').val() === 'COMPANY' && root.child('companies').child(newData.child('relatedEntityId').val()).child('ownerUserId').val() === auth.uid && root.child('users').child($recipientId).child('role').val() === 'ADMIN') || (root.child('users').child(auth.uid).child('role').val() === 'ADMIN' && (newData.child('relatedEntityType').val() === 'COMPANY' || newData.child('relatedEntityType').val() === 'JOB' || newData.child('relatedEntityType').val() === 'REPORT')) || (newData.child('type').val() === 'NEW_JOB_REPORT' && root.child('reports').child(newData.child('relatedEntityId').val()).child('reporterId').val() === auth.uid && root.child('users').child($recipientId).child('role').val() === 'ADMIN'))))",
+          ".validate": "newData.hasChildren(['id', 'recipientId', 'senderId', 'type', 'relatedEntityType', 'relatedEntityId', 'isRead', 'createdAt'])"
+        }
+      }
+    },
+
+    "userDevices": {
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        "$deviceId": {
+          ".write": "auth != null && $uid === auth.uid",
+          ".validate": "newData.hasChildren(['deviceId', 'token', 'platform', 'active', 'createdAt', 'updatedAt']) && newData.child('deviceId').val() === $deviceId && newData.child('platform').val() === 'android'"
         }
       }
     },
