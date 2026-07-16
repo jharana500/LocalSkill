@@ -42,4 +42,13 @@ class FileValidationService(private val context: Context) {
 
     fun validateImage(metadata: FileMetadata): String? =
         FileValidationUtils.validateImageFile(metadata.mimeType, metadata.sizeBytes)
+
+    fun validateCompanyLogo(metadata: FileMetadata): String? =
+        FileValidationUtils.validateCompanyLogo(metadata.mimeType, metadata.sizeBytes)
+
+    fun validateCompanyDocument(metadata: FileMetadata): String? =
+        FileValidationUtils.validateCompanyDocument(metadata.mimeType, metadata.sizeBytes)
+
+    fun validateReportEvidence(metadata: FileMetadata): String? =
+        FileValidationUtils.validateReportEvidence(metadata.mimeType, metadata.sizeBytes)
 }
