@@ -71,7 +71,7 @@ fun JobSeekerRegistrationScreen(
 }
 
 @Composable
-private fun JobSeekerRegistrationContent(
+internal fun JobSeekerRegistrationContent(
     uiState: JobSeekerRegistrationUiState,
     events: Flow<AuthEvent>,
     onFullNameChanged: (String) -> Unit,

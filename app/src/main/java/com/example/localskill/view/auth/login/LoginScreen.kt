@@ -67,7 +67,7 @@ fun LoginScreen(
 }
 
 @Composable
-private fun LoginContent(
+internal fun LoginContent(
     uiState: LoginUiState,
     events: Flow<AuthEvent>,
     onEmailChanged: (String) -> Unit,

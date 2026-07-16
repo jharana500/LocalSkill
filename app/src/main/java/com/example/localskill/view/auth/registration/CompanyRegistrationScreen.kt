@@ -71,7 +71,7 @@ fun CompanyRegistrationScreen(
 }
 
 @Composable
-private fun CompanyRegistrationContent(
+internal fun CompanyRegistrationContent(
     uiState: CompanyRegistrationUiState,
     events: Flow<AuthEvent>,
     onCompanyNameChanged: (String) -> Unit,
