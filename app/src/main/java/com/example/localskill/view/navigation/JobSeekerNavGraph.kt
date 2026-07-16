@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -50,10 +51,11 @@ private const val PROFILE_SUB_GRAPH_ROUTE = "job_seeker/profile_graph"
  */
 @Composable
 private fun sharedProfileViewModel(
+    entry: NavBackStackEntry,
     navController: NavHostController,
     viewModelFactory: LocalSkillViewModelFactory
 ): JobSeekerProfileViewModel {
-    val parentEntry = remember(navController) { navController.getBackStackEntry(PROFILE_SUB_GRAPH_ROUTE) }
+    val parentEntry = remember(entry) { navController.getBackStackEntry(PROFILE_SUB_GRAPH_ROUTE) }
     return viewModel(factory = viewModelFactory, viewModelStoreOwner = parentEntry)
 }
 
@@ -204,9 +206,9 @@ fun NavGraphBuilder.jobSeekerNavGraph(
         }
 
         navigation(startDestination = JobSeekerRoute.Profile.route, route = PROFILE_SUB_GRAPH_ROUTE) {
-            composable(JobSeekerRoute.Profile.route) {
+            composable(JobSeekerRoute.Profile.route) { entry ->
                 val currentRoute by navController.currentBackStackEntryAsState()
-                val viewModel = sharedProfileViewModel(navController, viewModelFactory)
+                val viewModel = sharedProfileViewModel(entry, navController, viewModelFactory)
                 JobSeekerScaffold(
                     currentRoute = currentRoute?.destination?.route,
                     onNavigate = { navController.navigateToJobSeekerTab(it) }
@@ -224,37 +226,37 @@ fun NavGraphBuilder.jobSeekerNavGraph(
                 }
             }
 
-            composable(JobSeekerRoute.EditProfile.route) {
+            composable(JobSeekerRoute.EditProfile.route) { entry ->
                 EditPersonalInfoScreen(
-                    viewModel = sharedProfileViewModel(navController, viewModelFactory),
+                    viewModel = sharedProfileViewModel(entry, navController, viewModelFactory),
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable(JobSeekerRoute.Education.route) {
+            composable(JobSeekerRoute.Education.route) { entry ->
                 ManageEducationScreen(
-                    viewModel = sharedProfileViewModel(navController, viewModelFactory),
+                    viewModel = sharedProfileViewModel(entry, navController, viewModelFactory),
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable(JobSeekerRoute.Experience.route) {
+            composable(JobSeekerRoute.Experience.route) { entry ->
                 ManageExperienceScreen(
-                    viewModel = sharedProfileViewModel(navController, viewModelFactory),
+                    viewModel = sharedProfileViewModel(entry, navController, viewModelFactory),
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable(JobSeekerRoute.Skills.route) {
+            composable(JobSeekerRoute.Skills.route) { entry ->
                 ManageSkillsScreen(
-                    viewModel = sharedProfileViewModel(navController, viewModelFactory),
+                    viewModel = sharedProfileViewModel(entry, navController, viewModelFactory),
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable(JobSeekerRoute.Resume.route) {
+            composable(JobSeekerRoute.Resume.route) { entry ->
                 ManageResumeScreen(
-                    viewModel = sharedProfileViewModel(navController, viewModelFactory),
+                    viewModel = sharedProfileViewModel(entry, navController, viewModelFactory),
                     onBack = { navController.popBackStack() }
                 )
             }

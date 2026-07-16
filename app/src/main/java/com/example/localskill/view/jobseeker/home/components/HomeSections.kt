@@ -153,8 +153,8 @@ fun ProfileCompletionCard(
 @Composable
 fun HomeSectionHeader(
     title: String,
-    onSeeAllClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSeeAllClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
