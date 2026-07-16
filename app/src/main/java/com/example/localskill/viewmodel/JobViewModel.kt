@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.localskill.model.JobCategoryModel
 import com.example.localskill.model.JobFilterModel
 import com.example.localskill.model.JobModel
+import com.example.localskill.model.JobReportModel
+import com.example.localskill.model.ReportType
 import com.example.localskill.repo.ApplicationRepo
 import com.example.localskill.repo.AuthRepo
 import com.example.localskill.repo.JobRepo
+import com.example.localskill.repo.ReportRepo
 import com.example.localskill.repo.SavedJobRepo
 import com.example.localskill.utils.JobFilterUtils
 import com.example.localskill.utils.ResultState
@@ -51,7 +54,8 @@ class JobViewModel(
     private val authRepo: AuthRepo,
     private val jobRepo: JobRepo,
     private val savedJobRepo: SavedJobRepo,
-    private val applicationRepo: ApplicationRepo
+    private val applicationRepo: ApplicationRepo,
+    private val reportRepo: ReportRepo
 ) : ViewModel() {
 
     private val _searchUiState = MutableStateFlow(JobSearchUiState())
@@ -190,6 +194,31 @@ class JobViewModel(
                     errorMessage = jobResult.message
                 )
 
+                else -> Unit
+            }
+        }
+    }
+
+    fun reportJob(jobId: String, reason: String, description: String) {
+        val userId = authRepo.currentUserId()
+        if (userId == null) {
+            viewModelScope.launch { _events.send(JobEvent.ShowMessage("Log in to report a job.")) }
+            return
+        }
+        val job = _detailsUiState.value.job
+        viewModelScope.launch {
+            val report = JobReportModel(
+                reporterId = userId,
+                targetType = ReportType.JOB.name,
+                targetId = jobId,
+                relatedJobId = jobId,
+                relatedCompanyId = job?.companyId.orEmpty(),
+                reason = reason,
+                description = description
+            )
+            when (val result = reportRepo.submitReport(report)) {
+                is ResultState.Success -> _events.send(JobEvent.ShowMessage("Report submitted. Thank you for letting us know."))
+                is ResultState.Error -> _events.send(JobEvent.ShowMessage(result.message))
                 else -> Unit
             }
         }

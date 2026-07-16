@@ -31,7 +31,17 @@ data class AppSessionUiState(
     val isLoading: Boolean = true,
     val destination: SessionDestination = SessionDestination.UNKNOWN,
     val activeRole: UserRole = UserRole.JOB_SEEKER,
-    val accountStatus: AccountStatus = AccountStatus.ACTIVE
+    val accountStatus: AccountStatus = AccountStatus.ACTIVE,
+    /**
+     * True for a COMPANY whose accountStatus isn't ACTIVE yet (still DRAFT,
+     * submitted PENDING, or REJECTED). The Company graph reads this to
+     * gate publishing/applicant-management routes while still allowing
+     * profile completion, document upload, and verification status review.
+     * The exact verification detail (which of those three states, and any
+     * rejection reason) is loaded live from CompanyRepo inside the graph —
+     * this flag only decides which mode the graph opens in.
+     */
+    val companyRestrictedMode: Boolean = false
 )
 
 /**
@@ -94,21 +104,27 @@ class AppSessionViewModel(
                             val accountStatus = runCatching { AccountStatus.valueOf(session.accountStatus) }
                                 .getOrDefault(AccountStatus.ACTIVE)
 
-                            val destination = if (accountStatus != AccountStatus.ACTIVE) {
-                                SessionDestination.ACCOUNT_STATUS
-                            } else {
-                                when (role) {
-                                    UserRole.JOB_SEEKER -> SessionDestination.JOB_SEEKER_ENTRY
-                                    UserRole.COMPANY -> SessionDestination.COMPANY_ENTRY
-                                    UserRole.ADMIN -> SessionDestination.ADMIN_ENTRY
-                                }
+                            // A suspended account is always blocked, for every role. A pending
+                            // Company is not suspended — it still needs to reach its own graph
+                            // to complete verification, so only Job Seekers (who have no
+                            // restricted-mode concept) fall back to AccountStatus when merely
+                            // non-active. Admin accounts are provisioned externally and are
+                            // never expected to be PENDING.
+                            val destination = when {
+                                accountStatus == AccountStatus.SUSPENDED -> SessionDestination.ACCOUNT_STATUS
+                                role == UserRole.JOB_SEEKER && accountStatus != AccountStatus.ACTIVE ->
+                                    SessionDestination.ACCOUNT_STATUS
+                                role == UserRole.COMPANY -> SessionDestination.COMPANY_ENTRY
+                                role == UserRole.ADMIN -> SessionDestination.ADMIN_ENTRY
+                                else -> SessionDestination.JOB_SEEKER_ENTRY
                             }
 
                             AppSessionUiState(
                                 isLoading = false,
                                 destination = destination,
                                 activeRole = role,
-                                accountStatus = accountStatus
+                                accountStatus = accountStatus,
+                                companyRestrictedMode = role == UserRole.COMPANY && accountStatus != AccountStatus.ACTIVE
                             )
                         }
                     }

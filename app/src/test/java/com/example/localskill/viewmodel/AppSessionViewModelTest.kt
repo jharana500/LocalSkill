@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -78,10 +79,38 @@ class AppSessionViewModelTest {
     }
 
     @Test
-    fun `routes pending company to account status`() = runTest {
+    fun `routes pending company to the restricted company graph`() = runTest {
         fakeAuthRepo = FakeAuthRepo().apply {
             loggedIn = true
             restoreSessionResult = ResultState.Success(sessionFor(UserRole.COMPANY, AccountStatus.PENDING))
+        }
+        fakePreferencesRepo = FakeAppPreferencesRepo(initialOnboardingCompleted = true)
+
+        val viewModel = AppSessionViewModel(fakeAuthRepo, fakePreferencesRepo)
+
+        assertEquals(SessionDestination.COMPANY_ENTRY, viewModel.uiState.value.destination)
+        assertTrue(viewModel.uiState.value.companyRestrictedMode)
+    }
+
+    @Test
+    fun `a verified active company is not in restricted mode`() = runTest {
+        fakeAuthRepo = FakeAuthRepo().apply {
+            loggedIn = true
+            restoreSessionResult = ResultState.Success(sessionFor(UserRole.COMPANY, AccountStatus.ACTIVE))
+        }
+        fakePreferencesRepo = FakeAppPreferencesRepo(initialOnboardingCompleted = true)
+
+        val viewModel = AppSessionViewModel(fakeAuthRepo, fakePreferencesRepo)
+
+        assertEquals(SessionDestination.COMPANY_ENTRY, viewModel.uiState.value.destination)
+        assertFalse(viewModel.uiState.value.companyRestrictedMode)
+    }
+
+    @Test
+    fun `a suspended company is always blocked regardless of verification state`() = runTest {
+        fakeAuthRepo = FakeAuthRepo().apply {
+            loggedIn = true
+            restoreSessionResult = ResultState.Success(sessionFor(UserRole.COMPANY, AccountStatus.SUSPENDED))
         }
         fakePreferencesRepo = FakeAppPreferencesRepo(initialOnboardingCompleted = true)
 

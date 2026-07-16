@@ -26,12 +26,22 @@ data class JobModel(
     val status: String = JobStatus.ACTIVE.name,
     val applicationCount: Int = 0,
     val featured: Boolean = false,
+    // Absent on jobs created before Phase 4; empty string is normalized to VISIBLE below
+    // so existing rows keep showing up in discovery without a data migration.
+    val moderationStatus: String = "",
+    val moderationReason: String = "",
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 ) {
     val isExpired: Boolean
         get() = applicationDeadline in 1..<System.currentTimeMillis()
 
+    val normalizedModerationStatus: String
+        get() = moderationStatus.ifBlank { JobModerationStatus.VISIBLE.name }
+
+    val isDiscoverable: Boolean
+        get() = normalizedModerationStatus == JobModerationStatus.VISIBLE.name
+
     val isOpenForApplications: Boolean
-        get() = status == JobStatus.ACTIVE.name && !isExpired
+        get() = status == JobStatus.ACTIVE.name && !isExpired && isDiscoverable
 }
