@@ -82,8 +82,4 @@ class UserViewModel(private val repo: UserRepo) : ViewModel() {
         }
     }
 
-    fun logout() {
-        repo.logout()
-        _uiState.value = UserUiState()
-    }
 }
