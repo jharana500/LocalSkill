@@ -1,0 +1,59 @@
+rules_version = '2';
+
+// NOTE ON COMPANY-SCOPED PATHS: Storage security rules cannot query the
+// Realtime Database (that cross-service `get()` is only available for
+// Firestore), so companyLogos/{companyId} and companyDocuments/{companyId}
+// cannot verify that request.auth.uid is the company's ownerUserId purely
+// in these rules. The app only ever calls FileRepo with the caller's own
+// companyId (resolved server-side of the client via CompanyRepo), so this
+// is enforced at the application layer; a hardened production deployment
+// would additionally mint a custom auth claim (companyId) via a Cloud
+// Function on company creation and check request.auth.token.companyId
+// here. Until then, these paths require authentication only.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /resumes/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    }
+
+    match /profileImages/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /companyLogos/{companyId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /companyDocuments/{companyId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/.*');
+    }
+
+    match /reportEvidence/{reporterId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == reporterId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf');
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,30 +1,22 @@
 package com.example.localskill.repo
 
 import com.example.localskill.model.UserModel
+import com.example.localskill.utils.ResultState
 
+/**
+ * Owns user profile records. Authentication concerns (login, registration,
+ * logout, password reset, email verification, session state) live in
+ * [AuthRepo] instead.
+ */
 interface UserRepo {
-    fun login( email:String, password:String,
-               callback: (Boolean, String)-> Unit)
-    // Auth
-    fun register(email: String, password:String,
-                 callback: (Boolean, String, String)-> Unit)
 
-    fun addUser(id: String, model: UserModel,
-                callback: (Boolean, String)-> Unit)
+    suspend fun addUser(user: UserModel): ResultState<Unit>
 
-    fun forgetPassword(email: String,
-                       callback: (Boolean, String)-> Unit)
+    suspend fun getUserById(userId: String): ResultState<UserModel>
 
-    fun editProfile(id: String , model: UserModel ,
-                    callback: (Boolean, String) -> Unit)
+    suspend fun getAllUsers(): ResultState<List<UserModel>>
 
-    fun deleteUser(id: String , callback: (Boolean, String) -> Unit)
+    suspend fun updateUser(user: UserModel): ResultState<Unit>
 
-    fun getUserById(id:String,
-                    callback: (Boolean, String, UserModel?) -> Unit)
-
-    fun getAllUser(callback: (Boolean, String, List<UserModel>) -> Unit)
-
-    fun logout(callback:(Boolean,String)-> Unit)
-
+    suspend fun deleteUser(userId: String): ResultState<Unit>
 }

@@ -1,0 +1,15 @@
+package com.example.localskill.model
+
+enum class AdminActivityType {
+    COMPANY_APPROVED,
+    COMPANY_REJECTED,
+    USER_SUSPENDED,
+    USER_REACTIVATED,
+    JOB_REMOVED,
+    JOB_RESTORED,
+    REPORT_RESOLVED,
+    REPORT_REJECTED,
+    CATEGORY_CREATED,
+    CATEGORY_EDITED,
+    CATEGORY_DEACTIVATED
+}

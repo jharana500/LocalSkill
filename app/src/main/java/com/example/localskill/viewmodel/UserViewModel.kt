@@ -1,91 +1,85 @@
 package com.example.localskill.viewmodel
 
-
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.localskill.model.UserModel
 import com.example.localskill.repo.UserRepo
+import com.example.localskill.utils.ResultState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
+data class UserUiState(
+    val isLoading: Boolean = false,
+    val user: UserModel? = null,
+    val users: List<UserModel> = emptyList(),
+    val errorMessage: String? = null
+)
 
-class UserViewModel(val repo : UserRepo) : ViewModel() {
-    fun login(
-        email: String, password: String,
-        callback: (Boolean, String) -> Unit
-    ) {
-        repo.login(email, password, callback)
-    }
+class UserViewModel(private val repo: UserRepo) : ViewModel() {
 
-    // Auth
-    fun register(
-        email: String, password: String,
-        callback: (Boolean, String, String) -> Unit
-    ) {
-        repo.register(email, password, callback)
-    }
+    private val _uiState = MutableStateFlow(UserUiState())
+    val uiState: StateFlow<UserUiState> = _uiState.asStateFlow()
 
-    fun addUser(
-        id: String, model: UserModel,
-        callback: (Boolean, String) -> Unit
-    ) {
-        repo.addUser(id, model, callback)
-    }
+    fun getUserById(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = repo.getUserById(userId)) {
+                is ResultState.Success -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, user = result.data)
 
-    fun forgetPassword(
-        email: String,
-        callback: (Boolean, String) -> Unit
-    ) {
-        repo.forgetPassword(email, callback)
-    }
+                is ResultState.Error -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, errorMessage = result.message)
 
-    fun editProfile(
-        id: String, model: UserModel,
-        callback: (Boolean, String) -> Unit
-    ) {
-        repo.editProfile(id, model, callback)
-    }
-
-    fun deleteUser(id: String, callback: (Boolean, String) -> Unit) {
-        repo.deleteUser(id, callback)
-    }
-
-    private val _loading = MutableLiveData<Boolean>()
-    val loading: MutableLiveData<Boolean> get() = _loading
-
-    private val _users = MutableLiveData<UserModel?>()
-    val users: MutableLiveData<UserModel?> get() = _users
-
-
-    fun getUserById(id: String) {
-        _loading.value = true
-        repo.getUserById(id) { success, msg, data ->
-            if (success) {
-                _users.value = data
-                _loading.value = false
-            } else {
-                _users.value = null
-                _loading.value = false
+                else -> Unit
             }
         }
     }
 
-    private val _allUsers = MutableLiveData<List<UserModel?>>()
-    val allUsers: MutableLiveData<List<UserModel?>> get() = _allUsers
+    fun getAllUsers() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = repo.getAllUsers()) {
+                is ResultState.Success -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, users = result.data)
 
-    fun getAllUser() {
-        _loading.value = true
-        repo.getAllUser { success, message, data ->
-            if (success) {
-                _loading.value = false
-                _allUsers.value = data
-            } else {
-                _loading.value = false
-                _allUsers.value = emptyList()
+                is ResultState.Error -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, errorMessage = result.message)
+
+                else -> Unit
             }
-
-        }
-
-        fun logout(callback: (Boolean, String) -> Unit) {
-            repo.logout(callback)
         }
     }
+
+    fun updateUser(user: UserModel) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = repo.updateUser(user)) {
+                is ResultState.Success -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, user = user)
+
+                is ResultState.Error -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, errorMessage = result.message)
+
+                else -> Unit
+            }
+        }
+    }
+
+    fun deleteUser(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = repo.deleteUser(userId)) {
+                is ResultState.Success -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, user = null)
+
+                is ResultState.Error -> _uiState.value =
+                    _uiState.value.copy(isLoading = false, errorMessage = result.message)
+
+                else -> Unit
+            }
+        }
+    }
+
 }
