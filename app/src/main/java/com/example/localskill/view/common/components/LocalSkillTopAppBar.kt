@@ -16,7 +16,8 @@ import androidx.compose.ui.Modifier
 fun LocalSkillTopAppBar(
     title: String,
     modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {}
 ) {
     CenterAlignedTopAppBar(
         title = { Text(title) },
@@ -28,6 +29,7 @@ fun LocalSkillTopAppBar(
                 }
             }
         },
+        actions = actions,
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors()
     )
 }

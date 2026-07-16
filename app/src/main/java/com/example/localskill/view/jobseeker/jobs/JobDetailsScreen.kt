@@ -18,16 +18,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +42,7 @@ import com.example.localskill.model.JobModel
 import com.example.localskill.utils.DateUtils
 import com.example.localskill.utils.SalaryFormatter
 import com.example.localskill.view.common.components.LocalSkillPrimaryButton
+import com.example.localskill.view.common.components.LocalSkillSnackbarHost
 import com.example.localskill.view.common.components.LocalSkillTopAppBar
 import com.example.localskill.view.common.components.RemoteAvatar
 import com.example.localskill.view.common.components.SectionHeader
@@ -46,6 +52,7 @@ import com.example.localskill.view.common.states.EmptyState
 import com.example.localskill.view.common.states.FullScreenLoading
 import com.example.localskill.view.theme.Spacing
 import com.example.localskill.viewmodel.JobDetailsUiState
+import com.example.localskill.viewmodel.JobEvent
 import com.example.localskill.viewmodel.JobViewModel
 
 @Composable
@@ -56,13 +63,46 @@ fun JobDetailsScreen(
     onApplyClick: (String) -> Unit
 ) {
     val uiState by viewModel.detailsUiState.collectAsStateWithLifecycle()
+    var showReportDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(jobId) {
         viewModel.loadJobDetails(jobId)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is JobEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
+
+    if (showReportDialog) {
+        ReportJobDialog(
+            onDismiss = { showReportDialog = false },
+            onSubmit = { reason, description ->
+                viewModel.reportJob(jobId, reason, description)
+                showReportDialog = false
+            }
+        )
+    }
+
     Scaffold(
-        topBar = { LocalSkillTopAppBar(title = "Job Details", onBack = onBack) }
+        topBar = {
+            LocalSkillTopAppBar(
+                title = "Job Details",
+                onBack = onBack,
+                actions = {
+                    if (!uiState.isLoading && uiState.job != null) {
+                        IconButton(onClick = { showReportDialog = true }) {
+                            Icon(imageVector = Icons.Default.Flag, contentDescription = "Report this job")
+                        }
+                    }
+                }
+            )
+        },
+        snackbarHost = { LocalSkillSnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Box(
             modifier = Modifier

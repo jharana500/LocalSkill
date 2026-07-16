@@ -3,6 +3,7 @@ package com.example.localskill.viewmodel
 import com.example.localskill.fakes.FakeAuthRepo
 import com.example.localskill.fakes.FakeJobRepo
 import com.example.localskill.fakes.FakeApplicationRepo
+import com.example.localskill.fakes.FakeReportRepo
 import com.example.localskill.fakes.FakeSavedJobRepo
 import com.example.localskill.model.JobModel
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ class JobViewModelTest {
     private lateinit var fakeAuthRepo: FakeAuthRepo
     private lateinit var fakeJobRepo: FakeJobRepo
     private lateinit var fakeSavedJobRepo: FakeSavedJobRepo
+    private lateinit var fakeReportRepo: FakeReportRepo
     private lateinit var viewModel: JobViewModel
 
     @Before
@@ -36,7 +38,8 @@ class JobViewModelTest {
             )
         }
         fakeSavedJobRepo = FakeSavedJobRepo()
-        viewModel = JobViewModel(fakeAuthRepo, fakeJobRepo, fakeSavedJobRepo, FakeApplicationRepo())
+        fakeReportRepo = FakeReportRepo()
+        viewModel = JobViewModel(fakeAuthRepo, fakeJobRepo, fakeSavedJobRepo, FakeApplicationRepo(), fakeReportRepo)
     }
 
     @After
@@ -87,5 +90,25 @@ class JobViewModelTest {
 
         viewModel.toggleSaveJob("1")
         assertTrue(fakeSavedJobRepo.savedIdsByUser["uid-123"]?.contains("1") != true)
+    }
+
+    @Test
+    fun `reportJob submits a report for the logged in user`() = runTest {
+        viewModel.loadJobDetails("1")
+        viewModel.reportJob("1", "Spam or misleading", "Looks fake")
+
+        val submitted = fakeReportRepo.reports.values.single()
+        assertEquals("uid-123", submitted.reporterId)
+        assertEquals("1", submitted.targetId)
+        assertEquals("Spam or misleading", submitted.reason)
+    }
+
+    @Test
+    fun `reportJob rejects a duplicate report against the same job`() = runTest {
+        viewModel.loadJobDetails("1")
+        viewModel.reportJob("1", "Spam or misleading", "")
+        viewModel.reportJob("1", "Scam or fraudulent", "")
+
+        assertEquals(1, fakeReportRepo.reports.size)
     }
 }
