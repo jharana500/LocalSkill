@@ -1,13 +1,17 @@
 package com.example.localskill.services
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.example.localskill.LocalSkillApplication
 import com.example.localskill.MainActivity
 import com.example.localskill.R
@@ -36,6 +40,7 @@ class LocalSkillMessagingService : FirebaseMessagingService() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         val type = NotificationType.from(message.data[KEY_TYPE].orEmpty()) ?: return
@@ -62,9 +67,19 @@ class LocalSkillMessagingService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
-        runCatching {
-            NotificationManagerCompat.from(this).notify(notificationId(message, type), notification)
+        if (canPostNotifications()) {
+            runCatching {
+                NotificationManagerCompat.from(this).notify(notificationId(message, type), notification)
+            }
         }
+    }
+
+    private fun canPostNotifications(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun createChannels() {
