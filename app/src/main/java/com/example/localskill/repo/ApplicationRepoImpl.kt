@@ -3,6 +3,8 @@ package com.example.localskill.repo
 import com.example.localskill.model.ApplicationModel
 import com.example.localskill.model.ApplicationStatus
 import com.example.localskill.model.JobModel
+import com.example.localskill.model.NotificationEntityType
+import com.example.localskill.model.NotificationType
 import com.example.localskill.utils.Constants
 import com.example.localskill.utils.FirebaseErrorMapper
 import com.example.localskill.utils.ResultState
@@ -11,12 +13,14 @@ import com.google.firebase.database.ServerValue
 import kotlinx.coroutines.tasks.await
 
 class ApplicationRepoImpl(
-    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
+    private val notificationRepo: NotificationRepo? = null
 ) : ApplicationRepo {
 
     private val applicationsRef = database.getReference(Constants.APPLICATIONS_NODE)
     private val userApplicationsRef = database.getReference(Constants.USER_APPLICATIONS_NODE)
     private val jobsRef = database.getReference(Constants.JOBS_NODE)
+    private val companiesRef = database.getReference(Constants.COMPANIES_NODE)
 
     override suspend fun hasApplied(userId: String, jobId: String): ResultState<Boolean> = try {
         val snapshot = userApplicationsRef.child(userId).child(jobId).get().await()
@@ -63,6 +67,29 @@ class ApplicationRepoImpl(
                 "${Constants.JOBS_NODE}/${job.id}/applicationCount" to ServerValue.increment(1)
             )
             database.reference.updateChildren(updates).await()
+            val companyOwnerId =
+                companiesRef.child(job.companyId).child("ownerUserId").get().await().getValue(String::class.java)
+                    .orEmpty()
+            if (companyOwnerId.isNotBlank()) {
+                notificationRepo?.createNotificationIfAbsent(
+                    recipientId = companyOwnerId,
+                    senderId = applicantId,
+                    type = NotificationType.NEW_APPLICATION,
+                    relatedEntityType = NotificationEntityType.APPLICATION,
+                    relatedEntityId = applicationId,
+                    secondaryEntityId = job.id,
+                    eventKey = "application:$applicationId:new_application"
+                )
+            }
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = applicantId,
+                senderId = applicantId,
+                type = NotificationType.APPLICATION_SUBMITTED,
+                relatedEntityType = NotificationEntityType.APPLICATION,
+                relatedEntityId = applicationId,
+                secondaryEntityId = job.id,
+                eventKey = "application:$applicationId:submitted"
+            )
             ResultState.Success(application)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -102,12 +129,35 @@ class ApplicationRepoImpl(
         }
 
         return try {
+            val now = System.currentTimeMillis()
             applicationsRef.child(applicationId).updateChildren(
                 mapOf(
                     "status" to ApplicationStatus.WITHDRAWN.name,
-                    "updatedAt" to System.currentTimeMillis()
+                    "updatedAt" to now
                 )
             ).await()
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = userId,
+                senderId = userId,
+                type = NotificationType.APPLICATION_WITHDRAWN_CONFIRMATION,
+                relatedEntityType = NotificationEntityType.APPLICATION,
+                relatedEntityId = applicationId,
+                secondaryEntityId = application.jobId,
+                eventKey = "application:$applicationId:withdrawn:$now:applicant"
+            )
+            val companyOwnerId = companiesRef.child(application.companyId).child("ownerUserId").get().await()
+                .getValue(String::class.java).orEmpty()
+            if (companyOwnerId.isNotBlank()) {
+                notificationRepo?.createNotificationIfAbsent(
+                    recipientId = companyOwnerId,
+                    senderId = userId,
+                    type = NotificationType.APPLICATION_WITHDRAWN,
+                    relatedEntityType = NotificationEntityType.APPLICATION,
+                    relatedEntityId = applicationId,
+                    secondaryEntityId = application.jobId,
+                    eventKey = "application:$applicationId:withdrawn:$now:company"
+                )
+            }
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)

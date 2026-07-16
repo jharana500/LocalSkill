@@ -11,6 +11,8 @@ import com.example.localskill.model.JobModel
 import com.example.localskill.model.JobModerationStatus
 import com.example.localskill.model.JobReportModel
 import com.example.localskill.model.JobStatus
+import com.example.localskill.model.NotificationEntityType
+import com.example.localskill.model.NotificationType
 import com.example.localskill.model.ReportStatus
 import com.example.localskill.model.UserModel
 import com.example.localskill.model.UserRole
@@ -24,7 +26,8 @@ import java.util.UUID
 
 class AdminRepoImpl(
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
-    private val userRepo: UserRepo
+    private val userRepo: UserRepo,
+    private val notificationRepo: NotificationRepo? = null
 ) : AdminRepo {
 
     private val usersRef: DatabaseReference = database.getReference(Constants.USERS_NODE)
@@ -77,6 +80,7 @@ class AdminRepoImpl(
             is ResultState.Success -> ResultState.Success(
                 result.data.filter { it.isPending }.sortedBy { it.verificationSubmittedAt }
             )
+
             else -> result
         }
 
@@ -109,7 +113,21 @@ class AdminRepoImpl(
                 "${Constants.USERS_NODE}/${company.ownerUserId}/updatedAt" to now
             )
             database.reference.updateChildren(updates).await()
-            recordActivity(adminId, AdminActivityType.COMPANY_APPROVED, "company", companyId, "Approved ${company.companyName}")
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = company.ownerUserId,
+                senderId = adminId,
+                type = NotificationType.COMPANY_VERIFIED,
+                relatedEntityType = NotificationEntityType.COMPANY,
+                relatedEntityId = companyId,
+                eventKey = "company:$companyId:verified:$now"
+            )
+            recordActivity(
+                adminId,
+                AdminActivityType.COMPANY_APPROVED,
+                "company",
+                companyId,
+                "Approved ${company.companyName}"
+            )
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -136,7 +154,21 @@ class AdminRepoImpl(
                     "updatedAt" to now
                 )
             ).await()
-            recordActivity(adminId, AdminActivityType.COMPANY_REJECTED, "company", companyId, "Rejected ${company.companyName}: $reason")
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = company.ownerUserId,
+                senderId = adminId,
+                type = NotificationType.COMPANY_VERIFICATION_REJECTED,
+                relatedEntityType = NotificationEntityType.COMPANY,
+                relatedEntityId = companyId,
+                eventKey = "company:$companyId:rejected:$now"
+            )
+            recordActivity(
+                adminId,
+                AdminActivityType.COMPANY_REJECTED,
+                "company",
+                companyId,
+                "Rejected ${company.companyName}: $reason"
+            )
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -151,7 +183,13 @@ class AdminRepoImpl(
             usersRef.child(targetUserId).updateChildren(
                 mapOf("accountStatus" to AccountStatus.SUSPENDED.name, "updatedAt" to System.currentTimeMillis())
             ).await()
-            recordActivity(adminId, AdminActivityType.USER_SUSPENDED, "user", targetUserId, "Suspended user $targetUserId")
+            recordActivity(
+                adminId,
+                AdminActivityType.USER_SUSPENDED,
+                "user",
+                targetUserId,
+                "Suspended user $targetUserId"
+            )
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -162,7 +200,13 @@ class AdminRepoImpl(
         usersRef.child(targetUserId).updateChildren(
             mapOf("accountStatus" to AccountStatus.ACTIVE.name, "updatedAt" to System.currentTimeMillis())
         ).await()
-        recordActivity(adminId, AdminActivityType.USER_REACTIVATED, "user", targetUserId, "Reactivated user $targetUserId")
+        recordActivity(
+            adminId,
+            AdminActivityType.USER_REACTIVATED,
+            "user",
+            targetUserId,
+            "Reactivated user $targetUserId"
+        )
         ResultState.Success(Unit)
     } catch (e: Exception) {
         ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -176,13 +220,16 @@ class AdminRepoImpl(
     }
 
     override suspend fun removeJob(adminId: String, jobId: String, reason: String): ResultState<Unit> = try {
+        val job = jobsRef.child(jobId).get().await().getValue(JobModel::class.java)
+        val now = System.currentTimeMillis()
         jobsRef.child(jobId).updateChildren(
             mapOf(
                 "moderationStatus" to JobModerationStatus.REMOVED.name,
                 "moderationReason" to reason,
-                "updatedAt" to System.currentTimeMillis()
+                "updatedAt" to now
             )
         ).await()
+        notifyCompanyOwnerForJob(job, adminId, NotificationType.JOB_MODERATED, "job:$jobId:moderated:$now")
         recordActivity(adminId, AdminActivityType.JOB_REMOVED, "job", jobId, "Removed job from discovery: $reason")
         ResultState.Success(Unit)
     } catch (e: Exception) {
@@ -190,13 +237,16 @@ class AdminRepoImpl(
     }
 
     override suspend fun restoreJob(adminId: String, jobId: String): ResultState<Unit> = try {
+        val job = jobsRef.child(jobId).get().await().getValue(JobModel::class.java)
+        val now = System.currentTimeMillis()
         jobsRef.child(jobId).updateChildren(
             mapOf(
                 "moderationStatus" to JobModerationStatus.VISIBLE.name,
                 "moderationReason" to "",
-                "updatedAt" to System.currentTimeMillis()
+                "updatedAt" to now
             )
         ).await()
+        notifyCompanyOwnerForJob(job, adminId, NotificationType.JOB_RESTORED, "job:$jobId:restored:$now")
         recordActivity(adminId, AdminActivityType.JOB_RESTORED, "job", jobId, "Restored job to discovery")
         ResultState.Success(Unit)
     } catch (e: Exception) {
@@ -230,14 +280,22 @@ class AdminRepoImpl(
         }
     }
 
-    override suspend fun setCategoryActive(categoryId: String, isActive: Boolean, adminId: String): ResultState<Unit> = try {
-        categoriesRef.child(categoryId).child("isActive").setValue(isActive).await()
-        val activityType = if (isActive) AdminActivityType.CATEGORY_EDITED else AdminActivityType.CATEGORY_DEACTIVATED
-        recordActivity(adminId, activityType, "category", categoryId, if (isActive) "Reactivated category" else "Deactivated category")
-        ResultState.Success(Unit)
-    } catch (e: Exception) {
-        ResultState.Error(FirebaseErrorMapper.map(e), e)
-    }
+    override suspend fun setCategoryActive(categoryId: String, isActive: Boolean, adminId: String): ResultState<Unit> =
+        try {
+            categoriesRef.child(categoryId).child("isActive").setValue(isActive).await()
+            val activityType =
+                if (isActive) AdminActivityType.CATEGORY_EDITED else AdminActivityType.CATEGORY_DEACTIVATED
+            recordActivity(
+                adminId,
+                activityType,
+                "category",
+                categoryId,
+                if (isActive) "Reactivated category" else "Deactivated category"
+            )
+            ResultState.Success(Unit)
+        } catch (e: Exception) {
+            ResultState.Error(FirebaseErrorMapper.map(e), e)
+        }
 
     override suspend fun getActivityLog(limit: Int): ResultState<List<AdminActivityModel>> = try {
         val snapshot = activitiesRef.get().await()
@@ -247,6 +305,27 @@ class AdminRepoImpl(
         ResultState.Success(activities)
     } catch (e: Exception) {
         ResultState.Error(FirebaseErrorMapper.map(e), e)
+    }
+
+    private suspend fun notifyCompanyOwnerForJob(
+        job: JobModel?,
+        adminId: String,
+        type: NotificationType,
+        eventKey: String
+    ) {
+        if (job == null || job.companyId.isBlank()) return
+        val ownerUserId =
+            companiesRef.child(job.companyId).child("ownerUserId").get().await().getValue(String::class.java).orEmpty()
+        if (ownerUserId.isBlank()) return
+        notificationRepo?.createNotificationIfAbsent(
+            recipientId = ownerUserId,
+            senderId = adminId,
+            type = type,
+            relatedEntityType = NotificationEntityType.JOB,
+            relatedEntityId = job.id,
+            secondaryEntityId = job.companyId,
+            eventKey = eventKey
+        )
     }
 
     private suspend fun recordActivity(

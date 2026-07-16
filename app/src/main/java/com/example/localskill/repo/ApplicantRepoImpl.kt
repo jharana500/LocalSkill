@@ -4,6 +4,8 @@ import com.example.localskill.model.ApplicationModel
 import com.example.localskill.model.ApplicationStatus
 import com.example.localskill.model.CompanyDashboardStatsModel
 import com.example.localskill.model.JobSeekerProfileModel
+import com.example.localskill.model.NotificationEntityType
+import com.example.localskill.model.NotificationType
 import com.example.localskill.utils.Constants
 import com.example.localskill.utils.FirebaseErrorMapper
 import com.example.localskill.utils.ResultState
@@ -13,7 +15,8 @@ import kotlinx.coroutines.tasks.await
 
 class ApplicantRepoImpl(
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
-    private val jobSeekerProfileRepo: JobSeekerProfileRepo
+    private val jobSeekerProfileRepo: JobSeekerProfileRepo,
+    private val notificationRepo: NotificationRepo? = null
 ) : ApplicantRepo {
 
     private val applicationsRef: DatabaseReference = database.getReference(Constants.APPLICATIONS_NODE)
@@ -55,7 +58,10 @@ class ApplicantRepoImpl(
         }
     }
 
-    override suspend fun getApplicationDetails(companyId: String, applicationId: String): ResultState<ApplicationModel> {
+    override suspend fun getApplicationDetails(
+        companyId: String,
+        applicationId: String
+    ): ResultState<ApplicationModel> {
         val owned = requireOwnedApplication(companyId, applicationId)
         return owned ?: ResultState.Error("This application was not found.")
     }
@@ -79,19 +85,35 @@ class ApplicantRepoImpl(
         }
 
         return try {
+            val now = System.currentTimeMillis()
             val updates = mutableMapOf<String, Any?>(
                 "status" to newStatus,
-                "updatedAt" to System.currentTimeMillis()
+                "updatedAt" to now
             )
             if (companyMessage.isNotBlank()) updates["companyMessage"] = companyMessage
             applicationsRef.child(applicationId).updateChildren(updates).await()
+            notificationTypeForStatus(newStatus)?.let { type ->
+                notificationRepo?.createNotificationIfAbsent(
+                    recipientId = application.applicantId,
+                    senderId = companyId,
+                    type = type,
+                    relatedEntityType = NotificationEntityType.APPLICATION,
+                    relatedEntityId = applicationId,
+                    secondaryEntityId = application.jobId,
+                    eventKey = "application:$applicationId:status:$newStatus:$now"
+                )
+            }
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
         }
     }
 
-    override suspend fun addCompanyMessage(companyId: String, applicationId: String, message: String): ResultState<Unit> {
+    override suspend fun addCompanyMessage(
+        companyId: String,
+        applicationId: String,
+        message: String
+    ): ResultState<Unit> {
         val owned = requireOwnedApplication(companyId, applicationId)
             ?: return ResultState.Error("This application was not found.")
         if (owned !is ResultState.Success) return owned.asUnitError()
@@ -122,19 +144,33 @@ class ApplicantRepoImpl(
             return ResultState.Error("Interview date must be in the future.")
         }
         val isReschedule = application.status == ApplicationStatus.INTERVIEW.name
-        if (!isReschedule && !ApplicationModel.isValidCompanyTransition(application.status, ApplicationStatus.INTERVIEW.name)) {
+        if (!isReschedule && !ApplicationModel.isValidCompanyTransition(
+                application.status,
+                ApplicationStatus.INTERVIEW.name
+            )
+        ) {
             return ResultState.Error("This application cannot be moved to interview from ${application.status}.")
         }
 
         return try {
+            val now = System.currentTimeMillis()
             val updates = mutableMapOf<String, Any?>(
                 "status" to ApplicationStatus.INTERVIEW.name,
                 "interviewDate" to interviewDate,
                 "interviewLocation" to interviewLocation,
-                "updatedAt" to System.currentTimeMillis()
+                "updatedAt" to now
             )
             if (companyMessage.isNotBlank()) updates["companyMessage"] = companyMessage
             applicationsRef.child(applicationId).updateChildren(updates).await()
+            notificationRepo?.createNotificationIfAbsent(
+                recipientId = application.applicantId,
+                senderId = companyId,
+                type = NotificationType.INTERVIEW_SCHEDULED,
+                relatedEntityType = NotificationEntityType.APPLICATION,
+                relatedEntityId = applicationId,
+                secondaryEntityId = application.jobId,
+                eventKey = "application:$applicationId:interview:$interviewDate"
+            )
             ResultState.Success(Unit)
         } catch (e: Exception) {
             ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -160,16 +196,25 @@ class ApplicantRepoImpl(
         )
     }
 
-    private suspend fun verifyJobOwnership(companyId: String, jobId: String): ResultState<List<ApplicationModel>>? = try {
-        val job = jobsRef.child(jobId).get().await()
-        val ownerId = job.child("companyId").getValue(String::class.java)
-        when {
-            !job.exists() -> ResultState.Error("This job was not found.")
-            ownerId != companyId -> ResultState.Error("You do not have permission to view these applicants.")
-            else -> null
+    private suspend fun verifyJobOwnership(companyId: String, jobId: String): ResultState<List<ApplicationModel>>? =
+        try {
+            val job = jobsRef.child(jobId).get().await()
+            val ownerId = job.child("companyId").getValue(String::class.java)
+            when {
+                !job.exists() -> ResultState.Error("This job was not found.")
+                ownerId != companyId -> ResultState.Error("You do not have permission to view these applicants.")
+                else -> null
+            }
+        } catch (e: Exception) {
+            ResultState.Error(FirebaseErrorMapper.map(e), e)
         }
-    } catch (e: Exception) {
-        ResultState.Error(FirebaseErrorMapper.map(e), e)
+
+    private fun notificationTypeForStatus(status: String): NotificationType? = when (status) {
+        ApplicationStatus.UNDER_REVIEW.name -> NotificationType.APPLICATION_UNDER_REVIEW
+        ApplicationStatus.SHORTLISTED.name -> NotificationType.APPLICATION_SHORTLISTED
+        ApplicationStatus.HIRED.name -> NotificationType.APPLICATION_HIRED
+        ApplicationStatus.REJECTED.name -> NotificationType.APPLICATION_REJECTED
+        else -> null
     }
 
     private fun ResultState<ApplicationModel>.asUnitError(): ResultState<Unit> = when (this) {
@@ -177,7 +222,10 @@ class ApplicantRepoImpl(
         else -> ResultState.Error("Unable to update this application. Please try again.")
     }
 
-    private suspend fun requireOwnedApplication(companyId: String, applicationId: String): ResultState<ApplicationModel>? = try {
+    private suspend fun requireOwnedApplication(
+        companyId: String,
+        applicationId: String
+    ): ResultState<ApplicationModel>? = try {
         val snapshot = applicationsRef.child(applicationId).get().await()
         val application = snapshot.getValue(ApplicationModel::class.java)
         when {

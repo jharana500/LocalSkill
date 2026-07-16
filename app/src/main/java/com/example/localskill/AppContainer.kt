@@ -59,7 +59,7 @@ class AppContainer(context: Context) {
 
     val jobSeekerProfileRepo: JobSeekerProfileRepo by lazy { JobSeekerProfileRepoImpl(firebaseDatabase) }
 
-    val applicationRepo: ApplicationRepo by lazy { ApplicationRepoImpl(firebaseDatabase) }
+    val applicationRepo: ApplicationRepo by lazy { ApplicationRepoImpl(firebaseDatabase, notificationRepo) }
 
     val savedJobRepo: SavedJobRepo by lazy { SavedJobRepoImpl(firebaseDatabase) }
 
@@ -69,15 +69,21 @@ class AppContainer(context: Context) {
 
     val fileRepo: FileRepo by lazy { FileRepoImpl(fileValidationService, firebaseStorage) }
 
-    val companyRepo: CompanyRepo by lazy { CompanyRepoImpl(firebaseDatabase) }
+    val companyRepo: CompanyRepo by lazy { CompanyRepoImpl(firebaseDatabase, notificationRepo) }
 
     val companyJobRepo: CompanyJobRepo by lazy { CompanyJobRepoImpl(firebaseDatabase, companyRepo) }
 
-    val applicantRepo: ApplicantRepo by lazy { ApplicantRepoImpl(firebaseDatabase, jobSeekerProfileRepo) }
+    val applicantRepo: ApplicantRepo by lazy {
+        ApplicantRepoImpl(
+            firebaseDatabase,
+            jobSeekerProfileRepo,
+            notificationRepo
+        )
+    }
 
-    val adminRepo: AdminRepo by lazy { AdminRepoImpl(firebaseDatabase, userRepo) }
+    val adminRepo: AdminRepo by lazy { AdminRepoImpl(firebaseDatabase, userRepo, notificationRepo) }
 
-    val reportRepo: ReportRepo by lazy { ReportRepoImpl(firebaseDatabase) }
+    val reportRepo: ReportRepo by lazy { ReportRepoImpl(firebaseDatabase, notificationRepo) }
 
     val notificationRepo: NotificationRepo by lazy { NotificationRepoImpl(firebaseDatabase) }
 }
