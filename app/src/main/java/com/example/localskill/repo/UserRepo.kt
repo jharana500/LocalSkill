@@ -1,30 +1,25 @@
 package com.example.localskill.repo
 
 import com.example.localskill.model.UserModel
+import com.example.localskill.utils.ResultState
 
 interface UserRepo {
-    fun login( email:String, password:String,
-               callback: (Boolean, String)-> Unit)
-    // Auth
-    fun register(email: String, password:String,
-                 callback: (Boolean, String, String)-> Unit)
 
-    fun addUser(id: String, model: UserModel,
-                callback: (Boolean, String)-> Unit)
+    suspend fun register(email: String, password: String): ResultState<String>
 
-    fun forgetPassword(email: String,
-                       callback: (Boolean, String)-> Unit)
+    suspend fun login(email: String, password: String): ResultState<String>
 
-    fun editProfile(id: String , model: UserModel ,
-                    callback: (Boolean, String) -> Unit)
+    suspend fun addUser(user: UserModel): ResultState<Unit>
 
-    fun deleteUser(id: String , callback: (Boolean, String) -> Unit)
+    suspend fun getUserById(userId: String): ResultState<UserModel>
 
-    fun getUserById(id:String,
-                    callback: (Boolean, String, UserModel?) -> Unit)
+    suspend fun getAllUsers(): ResultState<List<UserModel>>
 
-    fun getAllUser(callback: (Boolean, String, List<UserModel>) -> Unit)
+    suspend fun updateUser(user: UserModel): ResultState<Unit>
 
-    fun logout(callback:(Boolean,String)-> Unit)
+    suspend fun deleteUser(userId: String): ResultState<Unit>
 
+    suspend fun sendPasswordResetEmail(email: String): ResultState<Unit>
+
+    fun logout()
 }
