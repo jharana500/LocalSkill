@@ -1,0 +1,153 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".validate": "newData.hasChildren(['id', 'fullName', 'email', 'role', 'accountStatus'])",
+
+        "role": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || !data.exists()"
+        },
+        "accountStatus": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || !data.exists() || newData.val() === data.val()"
+        }
+      }
+    },
+
+    "jobSeekerProfiles": {
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'COMPANY')",
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+
+    "companies": {
+      ".read": "auth != null",
+      "$companyId": {
+        ".write": "auth != null && (data.child('ownerUserId').val() === auth.uid || (!data.exists() && newData.child('ownerUserId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+
+        "verificationStatus": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || newData.val() === 'PENDING' || newData.val() === data.val() || !data.exists()"
+        },
+        "verifiedAt": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || newData.val() === data.val() || !data.exists()"
+        },
+        "verifiedBy": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || newData.val() === data.val() || !data.exists()"
+        },
+        "rejectionReason": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || newData.val() === data.val() || !data.exists()"
+        },
+        "ownerUserId": {
+          ".validate": "!data.exists() || newData.val() === data.val()"
+        }
+      }
+    },
+
+    "companyDocuments": {
+      "$companyId": {
+        ".read": "auth != null && (root.child('companies').child($companyId).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null && (root.child('companies').child($companyId).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')"
+      }
+    },
+
+    "jobCategories": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'ADMIN'"
+    },
+
+    "jobs": {
+      ".read": "auth != null",
+      "$jobId": {
+        ".write": "auth != null && (root.child('companies').child(data.child('companyId').val()).child('ownerUserId').val() === auth.uid || (!data.exists() && root.child('companies').child(newData.child('companyId').val()).child('ownerUserId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+
+        "moderationStatus": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || newData.val() === data.val() || !data.exists()"
+        },
+        "moderationReason": {
+          ".validate": "root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || newData.val() === data.val() || !data.exists()"
+        },
+        "companyId": {
+          ".validate": "!data.exists() || newData.val() === data.val()"
+        }
+      }
+    },
+
+    "companyJobs": {
+      "$companyId": {
+        ".read": "auth != null && (root.child('companies').child($companyId).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null && (root.child('companies').child($companyId).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')"
+      }
+    },
+
+    "applications": {
+      "$applicationId": {
+        ".read": "auth != null && (data.child('applicantId').val() === auth.uid || root.child('companies').child(data.child('companyId').val()).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null && ((!data.exists() && newData.child('applicantId').val() === auth.uid) || data.child('applicantId').val() === auth.uid || root.child('companies').child(data.child('companyId').val()).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+
+        "applicantId": {
+          ".validate": "!data.exists() || newData.val() === data.val()"
+        },
+        "resumeUrl": {
+          ".validate": "!data.exists() || newData.val() === data.val() || data.parent().child('applicantId').val() === auth.uid"
+        },
+        "coverLetter": {
+          ".validate": "!data.exists() || newData.val() === data.val() || data.parent().child('applicantId').val() === auth.uid"
+        },
+        "status": {
+          ".validate": "!data.exists() || data.parent().child('applicantId').val() === auth.uid || root.child('companies').child(data.parent().child('companyId').val()).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN'"
+        }
+      }
+    },
+
+    "userApplications": {
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+
+    "jobApplications": {
+      "$jobId": {
+        ".read": "auth != null && (root.child('companies').child(root.child('jobs').child($jobId).child('companyId').val()).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null"
+      }
+    },
+
+    "companyApplications": {
+      "$companyId": {
+        ".read": "auth != null && (root.child('companies').child($companyId).child('ownerUserId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null"
+      }
+    },
+
+    "savedJobs": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+
+    "reports": {
+      "$reportId": {
+        ".read": "auth != null && (data.child('reporterId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+        ".write": "auth != null && ((!data.exists() && newData.child('reporterId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+
+        "reporterId": {
+          ".validate": "!data.exists() || newData.val() === data.val()"
+        }
+      }
+    },
+
+    "adminActivities": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'ADMIN'",
+      "$activityId": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'ADMIN' && !data.exists()"
+      }
+    }
+  }
+}
