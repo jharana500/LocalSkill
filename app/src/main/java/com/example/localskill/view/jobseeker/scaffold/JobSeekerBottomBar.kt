@@ -18,17 +18,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.example.localskill.view.navigation.JobSeekerRoute
 
 private data class BottomBarItem(
-    val route: String,
+    /** The registered route template — compared against the current back-stack entry's route. */
+    val templateRoute: String,
+    /** The concrete route actually passed to navigate(). */
+    val navigateRoute: String,
     val label: String,
     val icon: ImageVector
 )
 
 private val bottomBarItems = listOf(
-    BottomBarItem(JobSeekerRoute.Home.route, "Home", Icons.Default.Home),
-    BottomBarItem(JobSeekerRoute.Explore.route, "Explore", Icons.Default.Search),
-    BottomBarItem(JobSeekerRoute.Applications.route, "Applications", Icons.Default.Description),
-    BottomBarItem(JobSeekerRoute.Saved.route, "Saved", Icons.Default.Bookmark),
-    BottomBarItem(JobSeekerRoute.Profile.route, "Profile", Icons.Default.Person)
+    BottomBarItem(JobSeekerRoute.Home.route, JobSeekerRoute.Home.route, "Home", Icons.Default.Home),
+    BottomBarItem(JobSeekerRoute.Explore.route, JobSeekerRoute.Explore.BASE_ROUTE, "Explore", Icons.Default.Search),
+    BottomBarItem(JobSeekerRoute.Applications.route, JobSeekerRoute.Applications.route, "Applications", Icons.Default.Description),
+    BottomBarItem(JobSeekerRoute.Saved.route, JobSeekerRoute.Saved.route, "Saved", Icons.Default.Bookmark),
+    BottomBarItem(JobSeekerRoute.Profile.route, JobSeekerRoute.Profile.route, "Profile", Icons.Default.Person)
 )
 
 @Composable
@@ -39,8 +42,8 @@ fun JobSeekerBottomBar(
     NavigationBar {
         bottomBarItems.forEach { item ->
             NavigationBarItem(
-                selected = currentRoute == item.route,
-                onClick = { onNavigate(item.route) },
+                selected = currentRoute == item.templateRoute,
+                onClick = { onNavigate(item.navigateRoute) },
                 icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
                 label = {
                     Text(text = item.label, maxLines = 1, overflow = TextOverflow.Ellipsis)

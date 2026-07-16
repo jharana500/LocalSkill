@@ -22,19 +22,11 @@ import com.example.localskill.view.theme.Spacing
 import com.example.localskill.model.UserRole
 
 /**
- * Temporary phase boundaries: the real Job Seeker, Company, and Admin
- * experiences are built in later phases. These screens exist so
- * role-aware routing after login has somewhere real to land.
+ * Temporary phase boundaries: the real Company and Admin experiences are
+ * built in later phases. Job Seeker now has its own full nested graph
+ * (see JobSeekerNavGraph.kt) — these screens exist so role-aware routing
+ * for the remaining roles has somewhere real to land in the meantime.
  */
-@Composable
-fun JobSeekerEntryScreen(onLogout: () -> Unit) {
-    RoleEntryContent(
-        roleLabel = "Job Seeker",
-        message = "Your job search dashboard is coming in the next phase.",
-        onLogout = onLogout
-    )
-}
-
 @Composable
 fun CompanyEntryScreen(onLogout: () -> Unit) {
     RoleEntryContent(
@@ -90,14 +82,6 @@ private fun RoleEntryContent(
             onClick = onLogout,
             modifier = Modifier.padding(top = Spacing.xl)
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun JobSeekerEntryScreenPreview() {
-    LocalSkillTheme(appTheme = AppTheme.SYSTEM, activeRole = UserRole.JOB_SEEKER) {
-        JobSeekerEntryScreen(onLogout = {})
     }
 }
 

@@ -18,7 +18,6 @@ import com.example.localskill.view.auth.verification.EmailVerificationScreen
 import com.example.localskill.view.entry.AccountStatusScreen
 import com.example.localskill.view.entry.AdminEntryScreen
 import com.example.localskill.view.entry.CompanyEntryScreen
-import com.example.localskill.view.entry.JobSeekerEntryScreen
 import com.example.localskill.view.onboarding.OnboardingScreen
 import com.example.localskill.view.splash.SplashScreen
 import com.example.localskill.viewmodel.AppSessionViewModel
@@ -139,9 +138,13 @@ fun AppNavGraph(
             )
         }
 
-        composable(AppRoute.JobSeekerEntry.route) {
-            JobSeekerEntryScreen(onLogout = { sessionViewModel.logout() })
-        }
+        jobSeekerNavGraph(
+            navController = navController,
+            viewModelFactory = viewModelFactory,
+            activeRole = sessionUiState.activeRole,
+            onLogout = { sessionViewModel.logout() },
+            onRoleRejected = { sessionViewModel.evaluateSession() }
+        )
 
         composable(AppRoute.CompanyEntry.route) {
             CompanyEntryScreen(onLogout = { sessionViewModel.logout() })
