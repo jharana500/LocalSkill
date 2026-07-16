@@ -96,6 +96,8 @@ sealed class AuthEvent {
 
 class AuthViewModel(private val authRepo: AuthRepo) : ViewModel() {
 
+    fun currentEmailOrEmpty(): String = authRepo.currentUserEmail().orEmpty()
+
     private val _loginUiState = MutableStateFlow(LoginUiState())
     val loginUiState: StateFlow<LoginUiState> = _loginUiState.asStateFlow()
 

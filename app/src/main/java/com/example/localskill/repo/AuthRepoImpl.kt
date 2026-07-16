@@ -24,6 +24,8 @@ class AuthRepoImpl(
 
     override fun currentUserId(): String? = auth.currentUser?.uid
 
+    override fun currentUserEmail(): String? = auth.currentUser?.email
+
     override fun isUserLoggedIn(): Boolean = auth.currentUser != null
 
     override suspend fun login(email: String, password: String): ResultState<String> = try {

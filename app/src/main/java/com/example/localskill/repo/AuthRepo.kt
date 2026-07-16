@@ -12,6 +12,8 @@ interface AuthRepo {
 
     fun currentUserId(): String?
 
+    fun currentUserEmail(): String?
+
     fun isUserLoggedIn(): Boolean
 
     suspend fun login(email: String, password: String): ResultState<String>

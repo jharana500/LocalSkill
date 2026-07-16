@@ -7,10 +7,13 @@ import com.example.localskill.model.UserRole
 import com.example.localskill.repo.AppPreferencesRepo
 import com.example.localskill.repo.AuthRepo
 import com.example.localskill.utils.ResultState
+import com.example.localskill.view.theme.AppTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 enum class SessionDestination {
@@ -45,6 +48,12 @@ class AppSessionViewModel(
 
     private val _uiState = MutableStateFlow(AppSessionUiState())
     val uiState: StateFlow<AppSessionUiState> = _uiState.asStateFlow()
+
+    val appTheme: StateFlow<AppTheme> = appPreferencesRepo.appTheme.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = AppTheme.SYSTEM
+    )
 
     init {
         evaluateSession()

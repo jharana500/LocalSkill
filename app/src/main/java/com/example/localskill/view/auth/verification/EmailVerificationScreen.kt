@@ -43,14 +43,13 @@ import kotlinx.coroutines.flow.emptyFlow
 @Composable
 fun EmailVerificationScreen(
     viewModel: AuthViewModel,
-    email: String,
     onVerified: () -> Unit,
     onSignOut: () -> Unit
 ) {
     val uiState by viewModel.emailVerificationUiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(email) {
-        viewModel.prepareEmailVerification(email)
+    LaunchedEffect(Unit) {
+        viewModel.prepareEmailVerification(viewModel.currentEmailOrEmpty())
     }
 
     EmailVerificationContent(
