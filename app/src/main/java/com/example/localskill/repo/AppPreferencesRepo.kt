@@ -17,4 +17,6 @@ interface AppPreferencesRepo {
     suspend fun setOnboardingCompleted(completed: Boolean)
 
     suspend fun setAppTheme(theme: AppTheme)
+
+    suspend fun getOrCreateDeviceId(): String
 }

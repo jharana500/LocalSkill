@@ -17,6 +17,8 @@ import com.example.localskill.repo.CompanyJobRepo
 import com.example.localskill.repo.CompanyJobRepoImpl
 import com.example.localskill.repo.CompanyRepo
 import com.example.localskill.repo.CompanyRepoImpl
+import com.example.localskill.repo.DeviceTokenRepo
+import com.example.localskill.repo.DeviceTokenRepoImpl
 import com.example.localskill.repo.FileRepo
 import com.example.localskill.repo.FileRepoImpl
 import com.example.localskill.repo.JobRepo
@@ -86,6 +88,8 @@ class AppContainer(context: Context) {
     val reportRepo: ReportRepo by lazy { ReportRepoImpl(firebaseDatabase, notificationRepo) }
 
     val notificationRepo: NotificationRepo by lazy { NotificationRepoImpl(firebaseDatabase) }
+
+    val deviceTokenRepo: DeviceTokenRepo by lazy { DeviceTokenRepoImpl(firebaseDatabase) }
 }
 
 @Composable
