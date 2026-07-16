@@ -36,7 +36,8 @@ class LocalSkillViewModelFactory(
                 appContainer.authRepo,
                 appContainer.jobRepo,
                 appContainer.savedJobRepo,
-                appContainer.applicationRepo
+                appContainer.applicationRepo,
+                appContainer.reportRepo
             ) as T
 
         modelClass.isAssignableFrom(ApplicationViewModel::class.java) ->
@@ -130,6 +131,9 @@ class LocalSkillViewModelFactory(
 
         modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) ->
             AdminCategoryViewModel(appContainer.authRepo, appContainer.adminRepo) as T
+
+        modelClass.isAssignableFrom(AdminSettingsViewModel::class.java) ->
+            AdminSettingsViewModel(appContainer.appPreferencesRepo) as T
 
         else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
