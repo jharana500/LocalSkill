@@ -59,6 +59,7 @@ class ApplicationRepoImpl(
                 "${Constants.APPLICATIONS_NODE}/$applicationId" to application.toMap(),
                 "${Constants.USER_APPLICATIONS_NODE}/$applicantId/${job.id}" to applicationId,
                 "${Constants.JOB_APPLICATIONS_NODE}/${job.id}/$applicationId" to true,
+                "${Constants.COMPANY_APPLICATIONS_NODE}/${job.companyId}/$applicationId" to true,
                 "${Constants.JOBS_NODE}/${job.id}/applicationCount" to ServerValue.increment(1)
             )
             database.reference.updateChildren(updates).await()
