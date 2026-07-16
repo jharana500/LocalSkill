@@ -21,15 +21,13 @@ import com.example.localskill.view.theme.TouchTarget
 fun LocalSkillPrimaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     enabled: Boolean = true,
     isLoading: Boolean = false
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TouchTarget.minimum),
+        modifier = modifier.height(TouchTarget.minimum),
         enabled = enabled && !isLoading
     ) {
         if (isLoading) {
@@ -50,14 +48,12 @@ fun LocalSkillPrimaryButton(
 fun LocalSkillSecondaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     enabled: Boolean = true
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TouchTarget.minimum),
+        modifier = modifier.height(TouchTarget.minimum),
         enabled = enabled
     ) {
         Text(text)
@@ -84,14 +80,12 @@ fun LocalSkillTextButton(
 fun LocalSkillDestructiveButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     enabled: Boolean = true
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TouchTarget.minimum),
+        modifier = modifier.height(TouchTarget.minimum),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.error,

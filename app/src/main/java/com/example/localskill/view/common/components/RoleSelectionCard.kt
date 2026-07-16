@@ -2,7 +2,6 @@ package com.example.localskill.view.common.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -26,6 +26,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.localskill.view.theme.Spacing
 
+/**
+ * [accentColor]/[accentContainerColor] are explicit rather than sourced from
+ * the ambient MaterialTheme because role-selection screens show multiple
+ * role brand colors (Job Seeker blue, Company green) side by side, which a
+ * single app-wide color scheme can't represent at once.
+ */
 @Composable
 fun RoleSelectionCard(
     icon: ImageVector,
@@ -33,7 +39,9 @@ fun RoleSelectionCard(
     description: String,
     bullets: List<String>,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+    accentContainerColor: Color = MaterialTheme.colorScheme.primaryContainer
 ) {
     Card(
         onClick = onClick,
@@ -50,14 +58,14 @@ fun RoleSelectionCard(
                 Row(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                        .background(accentContainerColor, CircleShape),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = accentColor
                     )
                 }
                 Spacer(modifier = Modifier.padding(start = Spacing.sm))
