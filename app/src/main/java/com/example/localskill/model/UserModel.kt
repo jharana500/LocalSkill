@@ -8,7 +8,7 @@ data class UserModel(
     val address: String = "",
     val profileImageUrl: String = "",
     val role: String = UserRole.JOB_SEEKER.name,
-    val accountStatus: String = "ACTIVE",
+    val accountStatus: String = AccountStatus.ACTIVE.name,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 ) {
