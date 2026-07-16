@@ -16,8 +16,6 @@ import com.example.localskill.view.auth.registration.JobSeekerRegistrationScreen
 import com.example.localskill.view.auth.registration.RoleSelectionScreen
 import com.example.localskill.view.auth.verification.EmailVerificationScreen
 import com.example.localskill.view.entry.AccountStatusScreen
-import com.example.localskill.view.entry.AdminEntryScreen
-import com.example.localskill.view.entry.CompanyEntryScreen
 import com.example.localskill.view.onboarding.OnboardingScreen
 import com.example.localskill.view.splash.SplashScreen
 import com.example.localskill.viewmodel.AppSessionViewModel
@@ -146,12 +144,21 @@ fun AppNavGraph(
             onRoleRejected = { sessionViewModel.evaluateSession() }
         )
 
-        composable(AppRoute.CompanyEntry.route) {
-            CompanyEntryScreen(onLogout = { sessionViewModel.logout() })
-        }
+        companyNavGraph(
+            navController = navController,
+            viewModelFactory = viewModelFactory,
+            activeRole = sessionUiState.activeRole,
+            companyRestrictedMode = sessionUiState.companyRestrictedMode,
+            onLogout = { sessionViewModel.logout() },
+            onRoleRejected = { sessionViewModel.evaluateSession() }
+        )
 
-        composable(AppRoute.AdminEntry.route) {
-            AdminEntryScreen(onLogout = { sessionViewModel.logout() })
-        }
+        adminNavGraph(
+            navController = navController,
+            viewModelFactory = viewModelFactory,
+            activeRole = sessionUiState.activeRole,
+            onLogout = { sessionViewModel.logout() },
+            onRoleRejected = { sessionViewModel.evaluateSession() }
+        )
     }
 }
