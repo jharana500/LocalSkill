@@ -73,4 +73,16 @@ class AdminDashboardViewModel(
             )
         }
     }
+
+    /** Loads the full activity history (not just the dashboard's 10-item preview). */
+    fun loadActivityLog() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            when (val result = adminRepo.getActivityLog(200)) {
+                is ResultState.Success -> _uiState.value = _uiState.value.copy(isLoading = false, recentActivity = result.data)
+                is ResultState.Error -> _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = result.message)
+                else -> Unit
+            }
+        }
+    }
 }
