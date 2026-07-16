@@ -26,7 +26,7 @@ class JobRepoImpl(
     override suspend fun getActiveJobs(): ResultState<List<JobModel>> = try {
         val snapshot = jobsRef.get().await()
         val jobs = snapshot.children.mapNotNull { it.getValue(JobModel::class.java) }
-            .filter { it.status == JobStatus.ACTIVE.name }
+            .filter { it.status == JobStatus.ACTIVE.name && it.isDiscoverable }
         ResultState.Success(jobs)
     } catch (e: Exception) {
         ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -67,6 +67,7 @@ class JobRepoImpl(
     override suspend fun getCategories(): ResultState<List<JobCategoryModel>> = try {
         val snapshot = categoriesRef.get().await()
         val categories = snapshot.children.mapNotNull { it.getValue(JobCategoryModel::class.java) }
+            .filter { it.isActive }
         ResultState.Success(categories)
     } catch (e: Exception) {
         ResultState.Error(FirebaseErrorMapper.map(e), e)
@@ -76,7 +77,7 @@ class JobRepoImpl(
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val jobs = snapshot.children.mapNotNull { it.getValue(JobModel::class.java) }
-                    .filter { it.status == JobStatus.ACTIVE.name }
+                    .filter { it.status == JobStatus.ACTIVE.name && it.isDiscoverable }
                 trySend(jobs)
             }
 
