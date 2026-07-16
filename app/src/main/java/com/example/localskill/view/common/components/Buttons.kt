@@ -1,6 +1,5 @@
 package com.example.localskill.view.common.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -21,7 +20,7 @@ import com.example.localskill.view.theme.TouchTarget
 fun LocalSkillPrimaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false
 ) {
@@ -48,7 +47,7 @@ fun LocalSkillPrimaryButton(
 fun LocalSkillSecondaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
     OutlinedButton(
@@ -80,7 +79,7 @@ fun LocalSkillTextButton(
 fun LocalSkillDestructiveButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
     Button(
