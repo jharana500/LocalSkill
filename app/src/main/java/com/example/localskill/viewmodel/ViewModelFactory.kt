@@ -47,6 +47,9 @@ class LocalSkillViewModelFactory(
                 appContainer.jobSeekerProfileRepo
             ) as T
 
+        modelClass.isAssignableFrom(SavedJobViewModel::class.java) ->
+            SavedJobViewModel(appContainer.authRepo, appContainer.savedJobRepo) as T
+
         else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
