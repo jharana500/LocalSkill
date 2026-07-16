@@ -115,7 +115,11 @@ fun ApplicantDetailsScreen(
 
             val skills = uiState.applicantProfile?.skills.orEmpty()
             if (skills.isNotEmpty()) {
-                Text(text = "Skills", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = Spacing.md))
+                Text(
+                    text = "Skills",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = Spacing.md)
+                )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     items(skills) { skill -> StatusChip(text = skill.name) }
                 }
@@ -123,8 +127,16 @@ fun ApplicantDetailsScreen(
 
             if (application.coverLetter.isNotBlank()) {
                 LocalSkillCard(modifier = Modifier.padding(top = Spacing.md)) {
-                    Text(text = "Cover letter", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(text = application.coverLetter, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.xxs))
+                    Text(
+                        text = "Cover letter",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = application.coverLetter,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = Spacing.xxs)
+                    )
                 }
             }
 
@@ -139,8 +151,16 @@ fun ApplicantDetailsScreen(
 
             if (application.companyMessage.isNotBlank()) {
                 LocalSkillCard(modifier = Modifier.padding(top = Spacing.md)) {
-                    Text(text = "Your message", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(text = application.companyMessage, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Spacing.xxs))
+                    Text(
+                        text = "Your message",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = application.companyMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = Spacing.xxs)
+                    )
                 }
             }
 
@@ -148,7 +168,7 @@ fun ApplicantDetailsScreen(
                 LocalSkillCard(modifier = Modifier.padding(top = Spacing.md)) {
                     Text(text = "Interview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
-                        text = "${DateUtils.formatDate(application.interviewDate)} · ${application.interviewLocation}",
+                        text = "${DateUtils.formatInterviewDateTime(application.interviewDate)} · ${application.interviewLocation}",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = Spacing.xxs)
                     )

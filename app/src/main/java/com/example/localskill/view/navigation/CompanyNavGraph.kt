@@ -67,6 +67,11 @@ fun NavGraphBuilder.companyNavGraph(
                         onPostJobClick = { navController.navigate(CompanyRoute.JobForm.createRoute()) },
                         onReviewApplicantsClick = { navController.navigateToCompanyTab(CompanyRoute.Applicants.route) },
                         onVerificationClick = { navController.navigate(CompanyRoute.Verification.route) },
+                        onJobClick = { jobId ->
+                            navController.navigate(CompanyRoute.JobDetails.createRoute(jobId)) {
+                                launchSingleTop = true
+                            }
+                        },
                         modifier = Modifier.padding(padding)
                     )
                 }
