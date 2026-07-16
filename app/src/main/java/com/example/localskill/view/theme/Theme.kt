@@ -2,53 +2,35 @@ package com.example.localskill.view.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import com.example.localskill.model.UserRole
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryPurple,
-    onPrimary = Color.White,
-    background = TextPrimary,
-    surface = TextPrimary
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = PrimaryPurple,
-    onPrimary = Color.White,
-    background = LightBackground,
-    surface = CardWhite,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    secondary = SuccessGreen
-)
+enum class AppTheme {
+    LIGHT,
+    DARK,
+    SYSTEM
+}
 
 @Composable
 fun LocalSkillTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is opt-in only: LocalSkill's brand colors must not be
-    // silently replaced by the device wallpaper palette on Android 12+.
-    dynamicColor: Boolean = false,
+    appTheme: AppTheme = AppTheme.SYSTEM,
+    activeRole: UserRole = UserRole.JOB_SEEKER,
+    // Dynamic color is intentionally never used: LocalSkill's role-based brand
+    // identity must not be silently replaced by the device wallpaper palette.
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        // minSdk is 31, so dynamic color (API 31+) is always available once opted in.
-        dynamicColor -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val darkTheme = when (appTheme) {
+        AppTheme.LIGHT -> false
+        AppTheme.DARK -> true
+        AppTheme.SYSTEM -> isSystemInDarkTheme()
     }
+
+    val colorScheme = if (darkTheme) darkColorSchemeFor(activeRole) else lightColorSchemeFor(activeRole)
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = LocalSkillTypography,
+        shapes = LocalSkillShapes,
         content = content
     )
 }
