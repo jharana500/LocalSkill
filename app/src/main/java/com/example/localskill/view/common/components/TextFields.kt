@@ -37,7 +37,9 @@ fun LocalSkillTextField(
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Sentences,
     imeAction: ImeAction = ImeAction.Next,
     contentType: ContentType? = null,
-    leadingIcon: (@Composable () -> Unit)? = null
+    leadingIcon: (@Composable () -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null,
+    onImeAction: (() -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
@@ -51,10 +53,17 @@ fun LocalSkillTextField(
             singleLine = singleLine,
             isError = errorMessage != null,
             leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                 keyboardType = keyboardType,
                 capitalization = capitalization,
                 imeAction = imeAction
+            ),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                onSearch = if (imeAction == ImeAction.Search) ({ onImeAction?.invoke() }) else null,
+                onDone = if (imeAction == ImeAction.Done) ({ onImeAction?.invoke() }) else null,
+                onGo = if (imeAction == ImeAction.Go) ({ onImeAction?.invoke() }) else null,
+                onSend = if (imeAction == ImeAction.Send) ({ onImeAction?.invoke() }) else null
             )
         )
         if (errorMessage != null) {
