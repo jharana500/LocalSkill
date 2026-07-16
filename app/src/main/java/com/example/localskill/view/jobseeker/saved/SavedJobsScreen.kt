@@ -27,7 +27,9 @@ import com.example.localskill.view.common.states.ErrorMessage
 import com.example.localskill.view.common.states.FullScreenLoading
 import com.example.localskill.view.theme.Spacing
 import com.example.localskill.viewmodel.SavedJobEvent
+import com.example.localskill.viewmodel.SavedJobsUiState
 import com.example.localskill.viewmodel.SavedJobViewModel
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun SavedJobsScreen(
@@ -36,14 +38,34 @@ fun SavedJobsScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.loadSavedJobs()
     }
 
+    SavedJobsContent(
+        uiState = uiState,
+        events = viewModel.events,
+        onJobClick = onJobClick,
+        onUnsaveJob = viewModel::unsaveJob,
+        onRetry = viewModel::loadSavedJobs,
+        modifier = modifier
+    )
+}
+
+@Composable
+internal fun SavedJobsContent(
+    uiState: SavedJobsUiState,
+    events: Flow<SavedJobEvent>,
+    onJobClick: (String) -> Unit,
+    onUnsaveJob: (String) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+        events.collect { event ->
             when (event) {
                 is SavedJobEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
             }
@@ -66,7 +88,7 @@ fun SavedJobsScreen(
                     modifier = Modifier.padding(horizontal = Spacing.lg)
                 ) {
                     ErrorMessage(message = uiState.errorMessage.orEmpty())
-                    LocalSkillTextButton(text = "Retry", onClick = viewModel::loadSavedJobs)
+                    LocalSkillTextButton(text = "Retry", onClick = onRetry)
                 }
 
                 uiState.savedJobs.isEmpty() -> EmptyState(
@@ -82,7 +104,7 @@ fun SavedJobsScreen(
                         JobCard(
                             job = job,
                             isSaved = true,
-                            onSaveToggle = { viewModel.unsaveJob(job.id) },
+                            onSaveToggle = { onUnsaveJob(job.id) },
                             onClick = { onJobClick(job.id) }
                         )
                     }

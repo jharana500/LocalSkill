@@ -32,6 +32,7 @@ import com.example.localskill.view.common.states.FullScreenLoading
 import com.example.localskill.view.theme.Spacing
 import com.example.localskill.viewmodel.ApplicationFilterTab
 import com.example.localskill.viewmodel.ApplicationViewModel
+import com.example.localskill.viewmodel.ApplicationsUiState
 
 @Composable
 fun ApplicationsScreen(
@@ -45,6 +46,21 @@ fun ApplicationsScreen(
         viewModel.loadApplications()
     }
 
+    ApplicationsContent(
+        uiState = uiState,
+        onSelectTab = viewModel::selectApplicationsTab,
+        onApplicationClick = onApplicationClick,
+        modifier = modifier
+    )
+}
+
+@Composable
+internal fun ApplicationsContent(
+    uiState: ApplicationsUiState,
+    onSelectTab: (ApplicationFilterTab) -> Unit,
+    onApplicationClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxSize()) {
         Text(
             text = "My Applications",
@@ -57,7 +73,7 @@ fun ApplicationsScreen(
             ApplicationFilterTab.entries.forEach { tab ->
                 Tab(
                     selected = uiState.selectedTab == tab,
-                    onClick = { viewModel.selectApplicationsTab(tab) },
+                    onClick = { onSelectTab(tab) },
                     text = { Text(tabLabel(tab)) }
                 )
             }
@@ -91,7 +107,7 @@ fun ApplicationsScreen(
 }
 
 @Composable
-private fun ApplicationRow(application: ApplicationModel, onClick: () -> Unit) {
+internal fun ApplicationRow(application: ApplicationModel, onClick: () -> Unit) {
     LocalSkillCard(
         modifier = Modifier
             .fillMaxWidth()
