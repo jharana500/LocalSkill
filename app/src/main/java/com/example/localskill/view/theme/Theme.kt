@@ -1,4 +1,4 @@
-package com.example.localskill.ui.theme
+package com.example.localskill.view.theme
 
 import android.app.Activity
 import android.os.Build

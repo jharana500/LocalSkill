@@ -1,4 +1,4 @@
-package com.example.localskill.ui.theme
+package com.example.localskill.view.theme
 
 import androidx.compose.ui.graphics.Color
 
