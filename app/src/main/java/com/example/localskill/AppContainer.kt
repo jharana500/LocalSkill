@@ -3,18 +3,28 @@ package com.example.localskill
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.example.localskill.repo.AdminRepo
+import com.example.localskill.repo.AdminRepoImpl
 import com.example.localskill.repo.AppPreferencesRepo
 import com.example.localskill.repo.AppPreferencesRepoImpl
+import com.example.localskill.repo.ApplicantRepo
+import com.example.localskill.repo.ApplicantRepoImpl
 import com.example.localskill.repo.ApplicationRepo
 import com.example.localskill.repo.ApplicationRepoImpl
 import com.example.localskill.repo.AuthRepo
 import com.example.localskill.repo.AuthRepoImpl
+import com.example.localskill.repo.CompanyJobRepo
+import com.example.localskill.repo.CompanyJobRepoImpl
+import com.example.localskill.repo.CompanyRepo
+import com.example.localskill.repo.CompanyRepoImpl
 import com.example.localskill.repo.FileRepo
 import com.example.localskill.repo.FileRepoImpl
 import com.example.localskill.repo.JobRepo
 import com.example.localskill.repo.JobRepoImpl
 import com.example.localskill.repo.JobSeekerProfileRepo
 import com.example.localskill.repo.JobSeekerProfileRepoImpl
+import com.example.localskill.repo.ReportRepo
+import com.example.localskill.repo.ReportRepoImpl
 import com.example.localskill.repo.SavedJobRepo
 import com.example.localskill.repo.SavedJobRepoImpl
 import com.example.localskill.repo.UserRepo
@@ -56,6 +66,16 @@ class AppContainer(context: Context) {
     }
 
     val fileRepo: FileRepo by lazy { FileRepoImpl(fileValidationService, firebaseStorage) }
+
+    val companyRepo: CompanyRepo by lazy { CompanyRepoImpl(firebaseDatabase) }
+
+    val companyJobRepo: CompanyJobRepo by lazy { CompanyJobRepoImpl(firebaseDatabase, companyRepo) }
+
+    val applicantRepo: ApplicantRepo by lazy { ApplicantRepoImpl(firebaseDatabase, jobSeekerProfileRepo) }
+
+    val adminRepo: AdminRepo by lazy { AdminRepoImpl(firebaseDatabase, userRepo) }
+
+    val reportRepo: ReportRepo by lazy { ReportRepoImpl(firebaseDatabase) }
 }
 
 @Composable
