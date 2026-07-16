@@ -2,10 +2,10 @@ package com.example.localskill.repo
 
 import com.example.localskill.model.AccountStatus
 import com.example.localskill.model.AuthSessionModel
-import com.example.localskill.model.CompanyRegistrationModel
+import com.example.localskill.model.CompanyModel
+import com.example.localskill.model.CompanyVerificationStatus
 import com.example.localskill.model.UserModel
 import com.example.localskill.model.UserRole
-import com.example.localskill.model.VerificationStatus
 import com.example.localskill.utils.Constants
 import com.example.localskill.utils.FirebaseErrorMapper
 import com.example.localskill.utils.ResultState
@@ -103,14 +103,15 @@ class AuthRepoImpl(
                 return ResultState.Error(profileResult.message, profileResult.throwable)
             }
 
-            val company = CompanyRegistrationModel(
+            val company = CompanyModel(
                 id = uid,
                 ownerUserId = uid,
                 companyName = companyName,
+                contactPersonName = contactPersonName,
                 email = email,
                 phone = phone,
                 address = address,
-                verificationStatus = VerificationStatus.PENDING.name,
+                verificationStatus = CompanyVerificationStatus.DRAFT.name,
                 createdAt = now,
                 updatedAt = now
             )
