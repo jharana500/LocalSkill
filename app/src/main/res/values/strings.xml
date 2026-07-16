@@ -1,9 +1,3 @@
 <resources>
     <string name="app_name">LocalSkill</string>
-    <string name="title_activity_splash">SplashActivity</string>
-    <string name="title_activity_login">LoginActivity</string>
-    <string name="title_activity_dashboard">DashboardActivity</string>
-    <string name="title_activity_registration">RegistrationActivity</string>
-    <string name="title_activity_add_skill">AddSkillActivity</string>
-    <string name="title_activity_forget_password">ForgetPasswordActivity</string>
 </resources>
