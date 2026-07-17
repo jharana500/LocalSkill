@@ -1,14 +1,14 @@
 package com.example.localskill.viewmodel
 
-import com.example.localskill.fakes.FakeApplicationRepo
-import com.example.localskill.fakes.FakeAuthRepo
-import com.example.localskill.fakes.FakeJobRepo
-import com.example.localskill.fakes.FakeJobSeekerProfileRepo
 import com.example.localskill.model.ApplicationModel
 import com.example.localskill.model.ApplicationStatus
 import com.example.localskill.model.JobModel
 import com.example.localskill.model.JobSeekerProfileModel
 import com.example.localskill.model.ResumeModel
+import com.example.localskill.repo.ApplicationRepo
+import com.example.localskill.repo.AuthRepo
+import com.example.localskill.repo.JobRepo
+import com.example.localskill.repo.JobSeekerProfileRepo
 import com.example.localskill.utils.ResultState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,14 +22,19 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ApplicationViewModelTest {
 
-    private lateinit var fakeAuthRepo: FakeAuthRepo
-    private lateinit var fakeJobRepo: FakeJobRepo
-    private lateinit var fakeApplicationRepo: FakeApplicationRepo
-    private lateinit var fakeProfileRepo: FakeJobSeekerProfileRepo
+    private lateinit var authRepo: AuthRepo
+    private lateinit var jobRepo: JobRepo
+    private lateinit var applicationRepo: ApplicationRepo
+    private lateinit var profileRepo: JobSeekerProfileRepo
     private lateinit var viewModel: ApplicationViewModel
 
     private val job = JobModel(
@@ -41,19 +46,20 @@ class ApplicationViewModelTest {
         applicationDeadline = 0L
     )
 
+    private val profileWithResume = JobSeekerProfileModel(
+        userId = "uid-123",
+        resume = ResumeModel(fileName = "resume.pdf", downloadUrl = "https://example.com/resume.pdf")
+    )
+
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        fakeAuthRepo = FakeAuthRepo().apply { loggedIn = true }
-        fakeJobRepo = FakeJobRepo().apply { activeJobs = listOf(job) }
-        fakeApplicationRepo = FakeApplicationRepo()
-        fakeProfileRepo = FakeJobSeekerProfileRepo().apply {
-            profiles["uid-123"] = JobSeekerProfileModel(
-                userId = "uid-123",
-                resume = ResumeModel(fileName = "resume.pdf", downloadUrl = "https://example.com/resume.pdf")
-            )
-        }
-        viewModel = ApplicationViewModel(fakeAuthRepo, fakeJobRepo, fakeApplicationRepo, fakeProfileRepo)
+        authRepo = mock()
+        whenever(authRepo.currentUserId()).thenReturn("uid-123")
+        jobRepo = mock()
+        applicationRepo = mock()
+        profileRepo = mock()
+        viewModel = ApplicationViewModel(authRepo, jobRepo, applicationRepo, profileRepo)
     }
 
     @After
@@ -61,8 +67,16 @@ class ApplicationViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private suspend fun stubHappyApply() {
+        whenever(jobRepo.getJobById("job-1")).thenReturn(ResultState.Success(job))
+        whenever(applicationRepo.hasApplied("uid-123", "job-1")).thenReturn(ResultState.Success(false))
+        whenever(profileRepo.getProfile("uid-123")).thenReturn(ResultState.Success(profileWithResume))
+    }
+
     @Test
     fun `loadApplyScreen exposes the job and resume`() = runTest {
+        stubHappyApply()
+
         viewModel.loadApplyScreen("job-1")
         val state = viewModel.applyUiState.value
         assertEquals("job-1", state.job?.id)
@@ -72,12 +86,8 @@ class ApplicationViewModelTest {
 
     @Test
     fun `loadApplyScreen rejects a job the user already applied to`() = runTest {
-        fakeApplicationRepo.applications["existing"] = ApplicationModel(
-            id = "existing",
-            jobId = "job-1",
-            applicantId = "uid-123",
-            status = ApplicationStatus.APPLIED.name
-        )
+        whenever(jobRepo.getJobById("job-1")).thenReturn(ResultState.Success(job))
+        whenever(applicationRepo.hasApplied("uid-123", "job-1")).thenReturn(ResultState.Success(true))
 
         viewModel.loadApplyScreen("job-1")
 
@@ -86,18 +96,25 @@ class ApplicationViewModelTest {
 
     @Test
     fun `submitApplication succeeds and exposes success state`() = runTest {
+        stubHappyApply()
+        whenever(applicationRepo.submitApplication(job, "uid-123", profileWithResume.resume.downloadUrl, ""))
+            .thenReturn(ResultState.Success(ApplicationModel(id = "app-1")))
+
         viewModel.loadApplyScreen("job-1")
         viewModel.submitApplication()
 
         val state = viewModel.applyUiState.value
         assertTrue(state.isSuccess)
         assertFalse(state.isSubmitting)
-        assertEquals(1, fakeApplicationRepo.applications.size)
+        verify(applicationRepo).submitApplication(any(), any(), any(), any())
     }
 
     @Test
     fun `submitApplication surfaces repository failure`() = runTest {
-        fakeApplicationRepo.submitResult = ResultState.Error("Network error")
+        stubHappyApply()
+        whenever(applicationRepo.submitApplication(any(), any(), any(), any()))
+            .thenReturn(ResultState.Error("Network error"))
+
         viewModel.loadApplyScreen("job-1")
         viewModel.submitApplication()
 
@@ -108,31 +125,41 @@ class ApplicationViewModelTest {
 
     @Test
     fun `submitApplication without a resume is blocked client-side`() = runTest {
-        fakeProfileRepo.profiles["uid-123"] = JobSeekerProfileModel(userId = "uid-123")
+        whenever(jobRepo.getJobById("job-1")).thenReturn(ResultState.Success(job))
+        whenever(applicationRepo.hasApplied("uid-123", "job-1")).thenReturn(ResultState.Success(false))
+        whenever(profileRepo.getProfile("uid-123")).thenReturn(
+            ResultState.Success(JobSeekerProfileModel(userId = "uid-123"))
+        )
+
         viewModel.loadApplyScreen("job-1")
         viewModel.submitApplication()
 
         assertFalse(viewModel.applyUiState.value.isSuccess)
-        assertTrue(fakeApplicationRepo.applications.isEmpty())
+        verify(applicationRepo, times(0)).submitApplication(any(), any(), any(), any())
     }
 
     @Test
     fun `repeated submit taps do not create duplicate applications`() = runTest {
+        stubHappyApply()
+        whenever(applicationRepo.submitApplication(any(), any(), any(), any()))
+            .thenReturn(ResultState.Success(ApplicationModel(id = "app-1")))
+
         viewModel.loadApplyScreen("job-1")
         viewModel.submitApplication()
         viewModel.submitApplication()
 
-        assertEquals(1, fakeApplicationRepo.applications.size)
+        verify(applicationRepo, times(1)).submitApplication(any(), any(), any(), any())
     }
 
     @Test
     fun `withdrawApplication moves an eligible application to WITHDRAWN`() = runTest {
-        fakeApplicationRepo.applications["app-1"] = ApplicationModel(
-            id = "app-1",
-            jobId = "job-1",
-            applicantId = "uid-123",
-            status = ApplicationStatus.APPLIED.name
+        val application = ApplicationModel(id = "app-1", jobId = "job-1", applicantId = "uid-123", status = ApplicationStatus.APPLIED.name)
+        val withdrawn = application.copy(status = ApplicationStatus.WITHDRAWN.name)
+        whenever(applicationRepo.getApplicationById("app-1")).thenReturn(
+            ResultState.Success(application),
+            ResultState.Success(withdrawn)
         )
+        whenever(applicationRepo.withdrawApplication("uid-123", "app-1")).thenReturn(ResultState.Success(Unit))
 
         viewModel.loadApplicationDetails("app-1")
         viewModel.withdrawApplication()
@@ -142,17 +169,15 @@ class ApplicationViewModelTest {
 
     @Test
     fun `withdrawApplication is rejected once the application is HIRED`() = runTest {
-        fakeApplicationRepo.applications["app-1"] = ApplicationModel(
-            id = "app-1",
-            jobId = "job-1",
-            applicantId = "uid-123",
-            status = ApplicationStatus.HIRED.name
-        )
+        val application = ApplicationModel(id = "app-1", jobId = "job-1", applicantId = "uid-123", status = ApplicationStatus.HIRED.name)
+        whenever(applicationRepo.getApplicationById("app-1")).thenReturn(ResultState.Success(application))
+        whenever(applicationRepo.withdrawApplication("uid-123", "app-1"))
+            .thenReturn(ResultState.Error("This application can no longer be withdrawn."))
 
         viewModel.loadApplicationDetails("app-1")
         viewModel.withdrawApplication()
 
-        assertEquals(ApplicationStatus.HIRED.name, fakeApplicationRepo.applications["app-1"]?.status)
+        assertEquals(ApplicationStatus.HIRED.name, viewModel.applicationDetailsUiState.value.application?.status)
     }
 
     @Test

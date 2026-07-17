@@ -26,12 +26,14 @@ sealed class AdminRoute(val route: String) {
         const val REPORT_ID_ARG = "reportId"
 
         /** Bottom-navigation destinations — every other route hides the bottom bar. */
-        val MAIN_DESTINATIONS = setOf(
-            Dashboard.route,
-            Companies.route,
-            Jobs.route,
-            Reports.route,
-            More.route
-        )
+        val MAIN_DESTINATIONS by lazy {
+            setOf(
+                Dashboard.route,
+                Companies.route,
+                Jobs.route,
+                Reports.route,
+                More.route
+            )
+        }
     }
 }

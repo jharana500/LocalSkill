@@ -1,12 +1,11 @@
 package com.example.localskill.viewmodel
 
-import com.example.localskill.fakes.FakeAuthRepo
-import com.example.localskill.fakes.FakeCompanyRepo
-import com.example.localskill.fakes.FakeFileRepo
-import com.example.localskill.model.CompanyDocumentModel
-import com.example.localskill.model.CompanyDocumentType
 import com.example.localskill.model.CompanyModel
 import com.example.localskill.model.CompanyVerificationStatus
+import com.example.localskill.repo.AuthRepo
+import com.example.localskill.repo.CompanyRepo
+import com.example.localskill.repo.FileRepo
+import com.example.localskill.utils.ResultState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -18,12 +17,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CompanyVerificationViewModelTest {
 
-    private lateinit var fakeAuthRepo: FakeAuthRepo
-    private lateinit var fakeCompanyRepo: FakeCompanyRepo
+    private lateinit var authRepo: AuthRepo
+    private lateinit var companyRepo: CompanyRepo
+    private lateinit var fileRepo: FileRepo
     private lateinit var viewModel: CompanyVerificationViewModel
 
     private val completeCompany = CompanyModel(
@@ -41,9 +43,11 @@ class CompanyVerificationViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        fakeAuthRepo = FakeAuthRepo().apply { loggedIn = true }
-        fakeCompanyRepo = FakeCompanyRepo()
-        viewModel = CompanyVerificationViewModel(fakeAuthRepo, fakeCompanyRepo, FakeFileRepo())
+        authRepo = mock()
+        whenever(authRepo.currentUserId()).thenReturn("uid-123")
+        companyRepo = mock()
+        fileRepo = mock()
+        viewModel = CompanyVerificationViewModel(authRepo, companyRepo, fileRepo)
     }
 
     @After
@@ -53,51 +57,52 @@ class CompanyVerificationViewModelTest {
 
     @Test
     fun `submitVerification is blocked without a registration certificate`() = runTest {
-        fakeCompanyRepo.companies["uid-123"] = completeCompany
+        whenever(companyRepo.submitVerification("uid-123"))
+            .thenReturn(ResultState.Error("Upload your registration certificate before submitting."))
 
         viewModel.submitVerification()
 
-        assertEquals(CompanyVerificationStatus.DRAFT.name, fakeCompanyRepo.companies.getValue("uid-123").verificationStatus)
         assertNotNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
     fun `submitVerification is blocked with an incomplete profile`() = runTest {
-        fakeCompanyRepo.companies["uid-123"] = CompanyModel(id = "uid-123", verificationStatus = CompanyVerificationStatus.DRAFT.name)
-        fakeCompanyRepo.documents["uid-123"] = mutableListOf(
-            CompanyDocumentModel(id = "doc-1", companyId = "uid-123", documentType = CompanyDocumentType.REGISTRATION_CERTIFICATE.name)
-        )
+        whenever(companyRepo.submitVerification("uid-123"))
+            .thenReturn(ResultState.Error("Complete your company profile before submitting."))
 
         viewModel.submitVerification()
 
-        assertEquals(CompanyVerificationStatus.DRAFT.name, fakeCompanyRepo.companies.getValue("uid-123").verificationStatus)
+        assertNotNull(viewModel.uiState.value.errorMessage)
+        assertEquals(false, viewModel.uiState.value.submitSuccess)
     }
 
     @Test
     fun `submitVerification succeeds once profile and documents are complete`() = runTest {
-        fakeCompanyRepo.companies["uid-123"] = completeCompany
-        fakeCompanyRepo.documents["uid-123"] = mutableListOf(
-            CompanyDocumentModel(id = "doc-1", companyId = "uid-123", documentType = CompanyDocumentType.REGISTRATION_CERTIFICATE.name)
+        whenever(companyRepo.submitVerification("uid-123")).thenReturn(ResultState.Success(Unit))
+        whenever(companyRepo.getCompany("uid-123")).thenReturn(
+            ResultState.Success(completeCompany.copy(verificationStatus = CompanyVerificationStatus.PENDING.name))
         )
+        whenever(companyRepo.getDocuments("uid-123")).thenReturn(ResultState.Success(emptyList()))
 
         viewModel.submitVerification()
 
-        assertEquals(CompanyVerificationStatus.PENDING.name, fakeCompanyRepo.companies.getValue("uid-123").verificationStatus)
+        assertEquals(true, viewModel.uiState.value.submitSuccess)
+        assertEquals(CompanyVerificationStatus.PENDING.name, viewModel.uiState.value.company.verificationStatus)
     }
 
     @Test
     fun `a rejected company can resubmit for verification`() = runTest {
-        fakeCompanyRepo.companies["uid-123"] = completeCompany.copy(
-            verificationStatus = CompanyVerificationStatus.REJECTED.name,
-            rejectionReason = "Missing documents"
+        whenever(companyRepo.submitVerification("uid-123")).thenReturn(ResultState.Success(Unit))
+        whenever(companyRepo.getCompany("uid-123")).thenReturn(
+            ResultState.Success(
+                completeCompany.copy(verificationStatus = CompanyVerificationStatus.PENDING.name, rejectionReason = "")
+            )
         )
-        fakeCompanyRepo.documents["uid-123"] = mutableListOf(
-            CompanyDocumentModel(id = "doc-1", companyId = "uid-123", documentType = CompanyDocumentType.REGISTRATION_CERTIFICATE.name)
-        )
+        whenever(companyRepo.getDocuments("uid-123")).thenReturn(ResultState.Success(emptyList()))
 
         viewModel.submitVerification()
 
-        val company = fakeCompanyRepo.companies.getValue("uid-123")
+        val company = viewModel.uiState.value.company
         assertEquals(CompanyVerificationStatus.PENDING.name, company.verificationStatus)
         assertEquals("", company.rejectionReason)
     }

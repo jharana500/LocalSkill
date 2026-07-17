@@ -36,12 +36,14 @@ sealed class CompanyRoute(val route: String) {
         const val APPLICATION_ID_ARG = "applicationId"
 
         /** Bottom-navigation destinations — every other route hides the bottom bar. */
-        val MAIN_DESTINATIONS = setOf(
-            Dashboard.route,
-            Jobs.route,
-            Applicants.route,
-            Profile.route,
-            Settings.route
-        )
+        val MAIN_DESTINATIONS by lazy {
+            setOf(
+                Dashboard.route,
+                Jobs.route,
+                Applicants.route,
+                Profile.route,
+                Settings.route
+            )
+        }
     }
 }

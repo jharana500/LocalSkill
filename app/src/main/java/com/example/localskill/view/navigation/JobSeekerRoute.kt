@@ -52,12 +52,14 @@ sealed class JobSeekerRoute(val route: String) {
         const val APPLICATION_ID_ARG = "applicationId"
 
         /** Bottom-navigation destinations — every other route hides the bottom bar. */
-        val MAIN_DESTINATIONS = setOf(
-            Home.route,
-            Explore.route,
-            Applications.route,
-            Saved.route,
-            Profile.route
-        )
+        val MAIN_DESTINATIONS by lazy {
+            setOf(
+                Home.route,
+                Explore.route,
+                Applications.route,
+                Saved.route,
+                Profile.route
+            )
+        }
     }
 }
