@@ -23,7 +23,7 @@ class JobSeekerProfileRepoImpl(
         val snapshot = profilesRef.child(userId).get().await()
         val existing = snapshot.getValue(JobSeekerProfileModel::class.java)
         if (existing != null) {
-            ResultState.Success(existing)
+            ResultState.Success(existing.withNonNullLists())
         } else {
             val now = System.currentTimeMillis()
             val defaultProfile = JobSeekerProfileModel(userId = userId, createdAt = now, updatedAt = now)
@@ -33,6 +33,25 @@ class JobSeekerProfileRepoImpl(
     } catch (e: Exception) {
         ResultState.Error(FirebaseErrorMapper.map(e), e)
     }
+
+    /**
+     * Realtime Database omits empty lists/objects entirely when writing, and its
+     * reflection-based getValue() deserializer can leave a Kotlin non-null List
+     * field as literal null when the corresponding key is absent from storage —
+     * bypassing Kotlin's compile-time null-safety. `field ?: emptyList()` alone
+     * is not enough here: the Kotlin compiler sees a statically non-null Kotlin
+     * property and can optimize the check away entirely. Casting through a
+     * nullable type first forces a real runtime check that survives that
+     * optimization.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun JobSeekerProfileModel.withNonNullLists(): JobSeekerProfileModel = copy(
+        preferredJobTypes = (preferredJobTypes as List<String>?) ?: emptyList(),
+        preferredLocations = (preferredLocations as List<String>?) ?: emptyList(),
+        skills = (skills as List<SkillModel>?) ?: emptyList(),
+        education = (education as List<EducationModel>?) ?: emptyList(),
+        experience = (experience as List<ExperienceModel>?) ?: emptyList()
+    )
 
     private suspend fun saveProfile(profile: JobSeekerProfileModel): ResultState<Unit> = try {
         val updated = profile.copy(updatedAt = System.currentTimeMillis())

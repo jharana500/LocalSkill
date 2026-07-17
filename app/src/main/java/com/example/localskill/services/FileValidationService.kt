@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.example.localskill.utils.FileValidationUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class FileMetadata(
     val displayName: String,
@@ -18,7 +20,9 @@ data class FileMetadata(
  */
 class FileValidationService(private val context: Context) {
 
-    fun readMetadata(uri: Uri): FileMetadata? {
+    // ContentResolver.query() for a content:// Uri can be a real, sometimes slow, IPC
+    // call to another app's document provider (e.g. Drive) — never run it on Main.
+    suspend fun readMetadata(uri: Uri): FileMetadata? = withContext(Dispatchers.IO) {
         val resolver = context.contentResolver
         val mimeType = resolver.getType(uri)
         var displayName = ""
@@ -33,8 +37,8 @@ class FileValidationService(private val context: Context) {
             }
         }
 
-        if (displayName.isBlank()) return null
-        return FileMetadata(displayName = displayName, sizeBytes = sizeBytes, mimeType = mimeType)
+        if (displayName.isBlank()) return@withContext null
+        FileMetadata(displayName = displayName, sizeBytes = sizeBytes, mimeType = mimeType)
     }
 
     fun validateResume(metadata: FileMetadata): String? =

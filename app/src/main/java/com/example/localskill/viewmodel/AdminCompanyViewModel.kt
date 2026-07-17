@@ -33,6 +33,7 @@ data class AdminCompaniesUiState(
     val isLoading: Boolean = true,
     val companies: List<CompanyModel> = emptyList(),
     val filterTab: AdminCompanyFilterTab = AdminCompanyFilterTab.PENDING,
+    val processingCompanyId: String? = null,
     val errorMessage: String? = null
 ) {
     val filtered: List<CompanyModel> get() = companies.filter { filterTab.matches(it.verificationStatus) }
@@ -82,6 +83,47 @@ class AdminCompanyViewModel(
 
     fun setFilterTab(tab: AdminCompanyFilterTab) {
         _companiesUiState.value = _companiesUiState.value.copy(filterTab = tab)
+    }
+
+    /** Quick approve/reject directly from the companies list, without opening company details first. */
+    fun approveCompanyFromList(companyId: String) {
+        val adminId = authRepo.currentUserId() ?: return
+        if (_companiesUiState.value.processingCompanyId != null) return
+
+        viewModelScope.launch {
+            _companiesUiState.value = _companiesUiState.value.copy(processingCompanyId = companyId)
+            val result = adminRepo.approveCompany(adminId, companyId)
+            _companiesUiState.value = _companiesUiState.value.copy(processingCompanyId = null)
+            when (result) {
+                is ResultState.Success -> {
+                    _events.send(AdminCompanyEvent.ShowMessage("Company approved."))
+                    loadCompanies()
+                }
+
+                is ResultState.Error -> _events.send(AdminCompanyEvent.ShowMessage(result.message))
+                else -> Unit
+            }
+        }
+    }
+
+    fun rejectCompanyFromList(companyId: String, reason: String) {
+        val adminId = authRepo.currentUserId() ?: return
+        if (_companiesUiState.value.processingCompanyId != null) return
+
+        viewModelScope.launch {
+            _companiesUiState.value = _companiesUiState.value.copy(processingCompanyId = companyId)
+            val result = adminRepo.rejectCompany(adminId, companyId, reason)
+            _companiesUiState.value = _companiesUiState.value.copy(processingCompanyId = null)
+            when (result) {
+                is ResultState.Success -> {
+                    _events.send(AdminCompanyEvent.ShowMessage("Company rejected."))
+                    loadCompanies()
+                }
+
+                is ResultState.Error -> _events.send(AdminCompanyEvent.ShowMessage(result.message))
+                else -> Unit
+            }
+        }
     }
 
     fun loadCompanyDetails(companyId: String) {

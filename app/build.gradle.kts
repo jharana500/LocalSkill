@@ -43,6 +43,24 @@ android {
     }
 }
 
+// compose-bom's platform constraint is a soft preference, not a hard one. A transitive
+// request from androidx.compose.ui:ui-tooling (pulled in via debugImplementation) wins
+// Gradle's conflict resolution on the runtime classpath but not the compile classpath, so
+// the app compiles against an older androidx.compose.foundation:foundation-layout than
+// what actually gets packaged — causing a NoSuchMethodError at runtime for any experimental
+// API (like FlowRow) whose signature changed between those versions. Forcing one version
+// everywhere keeps compile and runtime in agreement.
+configurations.all {
+    resolutionStrategy {
+        force(
+            "androidx.compose.foundation:foundation:1.9.2",
+            "androidx.compose.foundation:foundation-android:1.9.2",
+            "androidx.compose.foundation:foundation-layout:1.9.2",
+            "androidx.compose.foundation:foundation-layout-android:1.9.2"
+        )
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -64,6 +82,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
+    implementation(libs.okhttp)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.core)

@@ -70,7 +70,6 @@ object JobValidationUtils {
     ): List<String> = buildList {
         if (title.isBlank()) add("Job title is required.")
         validateDescriptionLength(description)?.let { add(it) }
-        if (categoryId.isBlank()) add("Category is required.")
         if (location.isBlank()) add("Location is required.")
         if (jobType.isBlank()) add("Job type is required.")
         if (workplaceType.isBlank()) add("Workplace type is required.")

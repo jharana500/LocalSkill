@@ -24,6 +24,12 @@ object Constants {
     const val COMPANY_DOCUMENTS_STORAGE_PATH = "companyDocuments"
     const val REPORT_EVIDENCE_STORAGE_PATH = "reportEvidence"
 
+    // File uploads go to Cloudinary (unsigned preset) instead of Firebase Storage.
+    const val CLOUDINARY_CLOUD_NAME = "dqsbicxda"
+    const val CLOUDINARY_UPLOAD_PRESET = "eudj0mxp"
+    const val CLOUDINARY_UPLOAD_URL = "https://api.cloudinary.com/v1_1/$CLOUDINARY_CLOUD_NAME/auto/upload"
+    const val CLOUDINARY_FOLDER_ROOT = "localskill"
+
     const val EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = 60
     const val MIN_PASSWORD_LENGTH = 8
 

@@ -2,19 +2,19 @@ package com.example.localskill.utils
 
 object FileValidationUtils {
 
+    val ACCEPTED_IMAGE_MIME_TYPES = setOf("image/jpeg", "image/png", "image/webp")
+
     val ACCEPTED_RESUME_MIME_TYPES = setOf(
         "application/pdf",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
-
-    val ACCEPTED_IMAGE_MIME_TYPES = setOf("image/jpeg", "image/png", "image/webp")
+    ) + ACCEPTED_IMAGE_MIME_TYPES
 
     val ACCEPTED_DOCUMENT_MIME_TYPES = setOf("application/pdf", "image/jpeg", "image/png")
 
     fun validateResumeFile(mimeType: String?, sizeBytes: Long): String? = when {
         mimeType == null -> "Unable to read this file. Please choose another."
-        mimeType !in ACCEPTED_RESUME_MIME_TYPES -> "Choose a PDF or Word document."
+        mimeType !in ACCEPTED_RESUME_MIME_TYPES -> "Choose a PDF, Word document, or image."
         sizeBytes <= 0L -> "This file appears to be empty."
         sizeBytes > Constants.MAX_RESUME_SIZE_BYTES -> "File is larger than 5 MB. Choose a smaller file."
         else -> null

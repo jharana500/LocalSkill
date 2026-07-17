@@ -13,6 +13,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Agriculture
+import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Construction
+import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,11 +39,38 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.localskill.model.JobCategoryModel
 import com.example.localskill.view.common.components.LocalSkillTextButton
 import com.example.localskill.view.theme.Spacing
+
+/** Categories are free-text, admin-created names, not a fixed enum — match on
+ * common keywords so related categories get a relevant icon, falling back to
+ * a generic briefcase for anything unrecognized. */
+private fun iconForCategory(name: String): ImageVector {
+    val normalized = name.lowercase()
+    return when {
+        "engineer" in normalized || "develop" in normalized || "software" in normalized || "it " in normalized -> Icons.Default.Code
+        "market" in normalized || "advertis" in normalized -> Icons.Default.Campaign
+        "sales" in normalized || "business dev" in normalized -> Icons.AutoMirrored.Filled.TrendingUp
+        "design" in normalized || "creative" in normalized -> Icons.Default.Brush
+        "financ" in normalized || "account" in normalized || "bank" in normalized -> Icons.Default.Savings
+        "health" in normalized || "medic" in normalized || "nurs" in normalized || "hospital" in normalized -> Icons.Default.LocalHospital
+        "educat" in normalized || "teach" in normalized || "tutor" in normalized -> Icons.AutoMirrored.Filled.MenuBook
+        "customer" in normalized || "support" in normalized -> Icons.Default.SupportAgent
+        "human resource" in normalized || " hr" in normalized || normalized.startsWith("hr") -> Icons.Default.Groups
+        "legal" in normalized || "law" in normalized -> Icons.Default.Balance
+        "construct" in normalized || "civil" in normalized -> Icons.Default.Construction
+        "hospitality" in normalized || "hotel" in normalized || "restaurant" in normalized || "food" in normalized -> Icons.Default.Restaurant
+        "retail" in normalized || "store" in normalized -> Icons.Default.Storefront
+        "transport" in normalized || "logistic" in normalized || "driver" in normalized || "delivery" in normalized -> Icons.Default.LocalShipping
+        "agricultur" in normalized || "farm" in normalized -> Icons.Default.Agriculture
+        "security" in normalized || "guard" in normalized -> Icons.Default.Security
+        else -> Icons.Default.Work
+    }
+}
 
 @Composable
 fun HeroBanner(modifier: Modifier = Modifier) {
@@ -76,7 +119,7 @@ fun CategoryCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Work,
+                    imageVector = iconForCategory(category.name),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )

@@ -23,7 +23,14 @@ class FileValidationUtilsTest {
 
     @Test
     fun `unsupported resume mime type fails`() {
-        assertNotNull(FileValidationUtils.validateResumeFile("image/png", 1024L))
+        assertNotNull(FileValidationUtils.validateResumeFile("video/mp4", 1024L))
+    }
+
+    @Test
+    fun `image resume within size limit passes`() {
+        assertNull(FileValidationUtils.validateResumeFile("image/png", 1024L))
+        assertNull(FileValidationUtils.validateResumeFile("image/jpeg", 1024L))
+        assertNull(FileValidationUtils.validateResumeFile("image/webp", 1024L))
     }
 
     @Test

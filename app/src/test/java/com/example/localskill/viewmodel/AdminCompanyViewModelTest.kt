@@ -8,15 +8,19 @@ import com.example.localskill.repo.CompanyRepo
 import com.example.localskill.utils.ResultState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -99,5 +103,54 @@ class AdminCompanyViewModelTest {
 
         verify(adminRepo).approveCompany("admin-1", "company-1")
         assertEquals(CompanyVerificationStatus.VERIFIED.name, viewModel.detailsUiState.value.company?.verificationStatus)
+    }
+
+    @Test
+    fun `approveCompanyFromList approves and reloads the companies list`() = runTest {
+        val verifiedCompany = pendingCompany.copy(verificationStatus = CompanyVerificationStatus.VERIFIED.name)
+        whenever(adminRepo.approveCompany("admin-1", "company-1")).thenReturn(ResultState.Success(Unit))
+        whenever(adminRepo.getAllCompanies()).thenReturn(ResultState.Success(listOf(verifiedCompany)))
+
+        viewModel.approveCompanyFromList("company-1")
+
+        assertEquals(CompanyVerificationStatus.VERIFIED.name, viewModel.companiesUiState.value.companies.single().verificationStatus)
+        assertNull(viewModel.companiesUiState.value.processingCompanyId)
+    }
+
+    @Test
+    fun `approveCompanyFromList surfaces an error without reloading the list`() = runTest {
+        whenever(adminRepo.approveCompany("admin-1", "company-1"))
+            .thenReturn(ResultState.Error("Only companies under review can be approved."))
+
+        val events = mutableListOf<AdminCompanyEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+
+        viewModel.approveCompanyFromList("company-1")
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(AdminCompanyEvent.ShowMessage("Only companies under review can be approved.")),
+            events
+        )
+        verify(adminRepo, never()).getAllCompanies()
+        assertNull(viewModel.companiesUiState.value.processingCompanyId)
+        job.cancel()
+    }
+
+    @Test
+    fun `rejectCompanyFromList rejects with a reason and reloads the companies list`() = runTest {
+        val rejectedCompany = pendingCompany.copy(
+            verificationStatus = CompanyVerificationStatus.REJECTED.name,
+            rejectionReason = "Missing registration documents."
+        )
+        whenever(adminRepo.rejectCompany("admin-1", "company-1", "Missing registration documents."))
+            .thenReturn(ResultState.Success(Unit))
+        whenever(adminRepo.getAllCompanies()).thenReturn(ResultState.Success(listOf(rejectedCompany)))
+
+        viewModel.rejectCompanyFromList("company-1", "Missing registration documents.")
+
+        val company = viewModel.companiesUiState.value.companies.single()
+        assertEquals(CompanyVerificationStatus.REJECTED.name, company.verificationStatus)
+        assertEquals("Missing registration documents.", company.rejectionReason)
     }
 }

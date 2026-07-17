@@ -19,8 +19,8 @@ import com.example.localskill.repo.CompanyRepo
 import com.example.localskill.repo.CompanyRepoImpl
 import com.example.localskill.repo.DeviceTokenRepo
 import com.example.localskill.repo.DeviceTokenRepoImpl
+import com.example.localskill.repo.CloudinaryFileRepoImpl
 import com.example.localskill.repo.FileRepo
-import com.example.localskill.repo.FileRepoImpl
 import com.example.localskill.repo.JobRepo
 import com.example.localskill.repo.JobRepoImpl
 import com.example.localskill.repo.JobSeekerProfileRepo
@@ -36,7 +36,6 @@ import com.example.localskill.repo.UserRepoImpl
 import com.example.localskill.services.FileValidationService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
 
 /**
  * Hand-rolled dependency container. Repositories are created once here and
@@ -47,7 +46,6 @@ class AppContainer(context: Context) {
 
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firebaseDatabase: FirebaseDatabase = FirebaseDatabase.getInstance()
-    private val firebaseStorage: FirebaseStorage = FirebaseStorage.getInstance()
 
     val userRepo: UserRepo by lazy { UserRepoImpl(firebaseDatabase) }
 
@@ -69,7 +67,7 @@ class AppContainer(context: Context) {
         FileValidationService(context.applicationContext)
     }
 
-    val fileRepo: FileRepo by lazy { FileRepoImpl(fileValidationService, firebaseStorage) }
+    val fileRepo: FileRepo by lazy { CloudinaryFileRepoImpl(context.applicationContext, fileValidationService) }
 
     val companyRepo: CompanyRepo by lazy { CompanyRepoImpl(firebaseDatabase, notificationRepo) }
 

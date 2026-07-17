@@ -32,10 +32,13 @@ class JobRepoImpl(
         ResultState.Error(FirebaseErrorMapper.map(e), e)
     }
 
+    // Nothing in the app ever sets JobModel.featured = true (no admin/company UI for
+    // it), so filtering on that flag left this section permanently empty. Show the
+    // most recently posted active jobs instead, same as getRecentJobs.
     override suspend fun getFeaturedJobs(limit: Int): ResultState<List<JobModel>> =
         when (val result = getActiveJobs()) {
             is ResultState.Success -> ResultState.Success(
-                result.data.filter { it.featured }.sortedByDescending { it.createdAt }.take(limit)
+                result.data.sortedByDescending { it.createdAt }.take(limit)
             )
 
             else -> result

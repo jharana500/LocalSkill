@@ -34,7 +34,6 @@ import com.example.localskill.view.common.components.LocalSkillPrimaryButton
 import com.example.localskill.view.common.components.LocalSkillSecondaryButton
 import com.example.localskill.view.common.components.LocalSkillTopAppBar
 import com.example.localskill.view.common.dialogs.ConfirmationDialog
-import com.example.localskill.view.common.states.EmptyState
 import com.example.localskill.view.theme.Spacing
 import com.example.localskill.viewmodel.JobSeekerProfileViewModel
 import com.example.localskill.viewmodel.ProfileEvent
@@ -110,9 +109,15 @@ fun ManageResumeScreen(
                     )
                 }
             } else {
-                EmptyState(
-                    title = "No resume added",
-                    description = "Add a PDF or Word document so you're ready to apply for jobs."
+                // Not EmptyState here: it forces fillMaxSize() internally, which — as one
+                // of several children in this Column, alongside the button below it — would
+                // claim all remaining screen height for itself and push that button off-screen.
+                Text(text = "No resume added", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "Add a PDF, Word document, or image so you're ready to apply for jobs.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xxs)
                 )
                 LocalSkillPrimaryButton(
                     text = "Add resume",

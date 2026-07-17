@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.localskill.view.common.components.LocalSkillCard
 import com.example.localskill.view.common.components.RemoteAvatar
@@ -145,11 +146,12 @@ fun JobSeekerProfileScreen(
 
         if (uiState.profile.bio.isNotBlank()) {
             SectionHeader(title = "About", modifier = Modifier.padding(top = Spacing.lg))
-            Text(
-                text = uiState.profile.bio,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = Spacing.xs)
-            )
+            LocalSkillCard(modifier = Modifier.padding(top = Spacing.xs)) {
+                Text(
+                    text = uiState.profile.bio,
+                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp)
+                )
+            }
         }
 
         if (uiState.profile.skills.isNotEmpty()) {
